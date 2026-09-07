@@ -1,0 +1,214 @@
+@startuml ActiveHub_UML_Class_Diagram
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam packageFontStyle bold
+title ActiveHub Sports Centre Management System - UML Class Diagram
+
+' ========== Core entities ==========
+class Customer {
+  - name: String
+  - contactNumber: String
+  + getName(): String
+  + getContactNumber(): String
+  + setName(name: String): void
+  + setContactNumber(contact: String): void
+  + displayCustomer(): void
+}
+
+class Facility {
+  - facilityId: String
+  - facilityName: String
+  - facilityType: String
+  + getFacilityId(): String
+  + getFacilityName(): String
+  + getFacilityType(): String
+  + displayFacility(): void
+}
+
+class Booking {
+  - bookingId: String
+  - date: LocalDate
+  - time: LocalTime
+  - participants: int
+  - status: String
+  + cancel(): void
+  + isActive(): boolean
+  + getDayOfWeek(): DayOfWeek
+  + conflictsWith(f: Facility, d: LocalDate, t: LocalTime): boolean
+  + displayBooking(): void
+  + toFileLine(): String
+}
+
+class RentalItem {
+  - itemCode: String
+  - itemName: String
+  - category: String
+  - rentalPrice: double
+  + isEquipment(): boolean
+  + isFacility(): boolean
+  + isAccessory(): boolean
+  + displayItem(): void
+  + toFileLine(): String
+}
+
+class TransactionItem {
+  - quantity: int
+  + getSubtotal(): double
+  + addQuantity(extra: int): void
+  + display(): void
+}
+
+class Transaction {
+  - transactionId: String
+  - discountAmount: double
+  - finalAmount: double
+  - completed: boolean
+  + addItem(item: RentalItem, qty: int): void
+  + calculateSubtotal(): double
+  + hasFacility(): boolean
+  + getTotalEquipmentQuantity(): int
+  + getFacilityCharge(): double
+  + calculateServiceCharge(): double
+  + calculateFinalAmount(): double
+  + setSelectedPromotion(p: Promotion, saving: double): void
+  + markCompleted(): void
+  + displayBill(): void
+}
+
+' ========== Polymorphism: Promotion ==========
+interface Promotion {
+  + getCode(): String
+  + getName(): String
+  + isEligible(t: Transaction): boolean
+  + calculateSaving(t: Transaction): double
+}
+
+class OffPeakSaver {
+  + getCode(): String
+  + getName(): String
+  + isEligible(t: Transaction): boolean
+  + calculateSaving(t: Transaction): double
+}
+
+class TeamBookingReward {
+  + getCode(): String
+  + getName(): String
+  + isEligible(t: Transaction): boolean
+  + calculateSaving(t: Transaction): double
+}
+
+class EquipmentBundleDiscount {
+  + getCode(): String
+  + getName(): String
+  + isEligible(t: Transaction): boolean
+  + calculateSaving(t: Transaction): double
+}
+
+class PromotionEngine {
+  - promotions: List~Promotion~
+  + applyBestPromotion(t: Transaction): void
+}
+
+' ========== Polymorphism: Payment ==========
+interface Payment {
+  + processPayment(amount: double): void
+  + getPaymentMethod(): String
+}
+
+class CashPayment {
+  + processPayment(amount: double): void
+  + getPaymentMethod(): String
+}
+
+class CardPayment {
+  - lastFourDigits: String
+  + processPayment(amount: double): void
+  + getPaymentMethod(): String
+}
+
+class EWalletPayment {
+  - walletName: String
+  + processPayment(amount: double): void
+  + getPaymentMethod(): String
+}
+
+' ========== Support / Controller ==========
+class FileManager {
+  - dataFolder: String
+  + saveCatalogue(items: List): void
+  + loadCatalogue(): List
+  + saveFacilities(list: List): void
+  + loadFacilities(): List
+  + saveBookings(list: List): void
+  + loadBookings(facilities: List): List
+  + saveTransactions(list: List): void
+}
+
+class DailyReport {
+  + generate(bookings: List, transactions: List): void
+}
+
+class ActiveHubSystem {
+  - facilities: List~Facility~
+  - catalogue: List~RentalItem~
+  - bookings: List~Booking~
+  - transactions: List~Transaction~
+  + run(): void
+}
+
+class Main {
+  + main(args: String[]): void
+}
+
+' ========== Relationships ==========
+' Association
+Customer "1" <-- "0..*" Booking : places
+Facility "1" <-- "0..*" Booking : reserved for
+Customer "1" <-- "0..*" Transaction : requests
+Booking "0..1" <-- "0..*" Transaction : linked to
+RentalItem "1" <-- "0..*" TransactionItem : describes
+Promotion "0..1" <-- "0..1" Transaction : selected
+Payment "0..1" <-- "0..1" Transaction : paid by
+
+' Composition (Transaction owns TransactionItems)
+Transaction "1" *-- "1..*" TransactionItem : contains
+
+' Aggregation
+ActiveHubSystem o-- "*" Facility
+ActiveHubSystem o-- "*" RentalItem
+ActiveHubSystem o-- "*" Booking
+ActiveHubSystem o-- "*" Transaction
+ActiveHubSystem o-- "1" FileManager
+ActiveHubSystem o-- "1" PromotionEngine
+ActiveHubSystem o-- "1" DailyReport
+PromotionEngine o-- "3" Promotion : evaluates
+
+' Inheritance / Realization (polymorphism)
+Promotion <|.. OffPeakSaver
+Promotion <|.. TeamBookingReward
+Promotion <|.. EquipmentBundleDiscount
+Payment <|.. CashPayment
+Payment <|.. CardPayment
+Payment <|.. EWalletPayment
+
+Main ..> ActiveHubSystem : creates
+
+note right of Promotion
+  Polymorphism:
+  PromotionEngine holds List of Promotion
+  and calls isEligible() / calculateSaving()
+  without knowing the concrete class.
+end note
+
+note right of Payment
+  Polymorphism:
+  Transaction stores Payment interface;
+  Cash / Card / E-Wallet differ at runtime.
+end note
+
+note bottom of Booking
+  Uses java.time.LocalDate, LocalTime, DayOfWeek
+  for scheduling and Off-Peak eligibility.
+end note
+
+@enduml

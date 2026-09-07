@@ -1,0 +1,8 @@
+E01|Badminton Racquet|Equipment|8.0
+E02|Shuttlecock Set|Equipment|5.0
+E03|Basketball|Equipment|6.0
+E04|Futsal Ball|Equipment|6.0
+C01|Badminton Court Package (1hr)|Facility|40.0
+C02|Futsal Court Package (1hr)|Facility|80.0
+A01|Towel Set|Accessory|3.0
+A02|Locker Service|Accessory|4.0

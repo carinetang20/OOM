@@ -1,27 +1,40 @@
 package activehub;
 
+/**
+ * Represents a customer who books facilities or rents equipment.
+ */
 public class Customer {
     private String name;
     private String contactNumber;
 
-    public Customer(String name, String contactNumber){
+    public Customer(String name, String contactNumber) {
         this.name = name;
         this.contactNumber = contactNumber;
     }
-    public String getName(){
+
+    public String getName() {
         return name;
     }
-    public String getContactNumber(){
+
+    public String getContactNumber() {
         return contactNumber;
     }
-    public void setName(String name){
+
+    public void setName(String name) {
         this.name = name;
     }
-    public void setContactNumber(String contactNumber){
+
+    public void setContactNumber(String contactNumber) {
         this.contactNumber = contactNumber;
     }
-    public void displayCustomer(){
-        System.out.println("Customer Name: " + name);
-        System.out.println("Contact Number: " + contactNumber);
+
+    public void displayCustomer() {
+        System.out.println("Customer Name  : " + name);
+        System.out.println("Contact Number : " + contactNumber);
+    }
+
+    @Override
+    public String toString() {
+        return name + " (" + contactNumber + ")";
     }
 }

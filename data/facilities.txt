@@ -1,0 +1,5 @@
+F01|Badminton Court 1|Badminton
+F02|Badminton Court 2|Badminton
+F03|Futsal Court A|Futsal
+F04|Basketball Court|Basketball
+F05|Table Tennis Room|Table Tennis

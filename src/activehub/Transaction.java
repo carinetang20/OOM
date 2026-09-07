@@ -1,75 +1,225 @@
 package activehub;
 
 import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * A rental transaction that may link to a facility booking.
+ * Calculates subtotal, service charge (10%), discount and final amount.
+ */
 public class Transaction {
     private String transactionId;
     private Customer customer;
-    private Booking booking;
+    private Booking booking; // may be null for pure walk-in rentals
     private ArrayList<TransactionItem> items;
-
     private Promotion selectedPromotion;
     private double discountAmount;
     private double finalAmount;
     private Payment payment;
     private boolean completed;
+    private List<String> eligiblePromotionSummary;
 
-    public Transaction(String transactionId, Customer customer, Booking booking){
+    public Transaction(String transactionId, Customer customer, Booking booking) {
         this.transactionId = transactionId;
         this.customer = customer;
         this.booking = booking;
         this.items = new ArrayList<>();
+        this.discountAmount = 0.0;
+        this.finalAmount = 0.0;
         this.completed = false;
+        this.eligiblePromotionSummary = new ArrayList<>();
     }
-    public void addItem(RentalItem item, int quantity){
-        TransactionItem transactionItem = new TransactionItem(item, quantity);
 
-        items.add(transactionItem);
+    public String getTransactionId() {
+        return transactionId;
     }
-    public double calculateSubtotal(){
-        double subtotal = 0;
 
-        for (TransactionItem : items){
-            if (items.getItem().getCategory().equalsIgnoreCase("Facility")){
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public Booking getBooking() {
+        return booking;
+    }
+
+    public ArrayList<TransactionItem> getItems() {
+        return items;
+    }
+
+    public Promotion getSelectedPromotion() {
+        return selectedPromotion;
+    }
+
+    public double getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public double getFinalAmount() {
+        return finalAmount;
+    }
+
+    public Payment getPayment() {
+        return payment;
+    }
+
+    public boolean isCompleted() {
+        return completed;
+    }
+
+    public List<String> getEligiblePromotionSummary() {
+        return eligiblePromotionSummary;
+    }
+
+    public void addItem(RentalItem item, int quantity) {
+        for (TransactionItem existing : items) {
+            if (existing.getItem().getItemCode().equalsIgnoreCase(item.getItemCode())) {
+                existing.addQuantity(quantity);
+                return;
+            }
+        }
+        items.add(new TransactionItem(item, quantity));
+    }
+
+    public double calculateSubtotal() {
+        double subtotal = 0.0;
+        for (TransactionItem item : items) {
+            subtotal += item.getSubtotal();
+        }
+        return subtotal;
+    }
+
+    public boolean hasFacility() {
+        for (TransactionItem item : items) {
+            if (item.getItem().isFacility()) {
                 return true;
             }
         }
         return false;
     }
-    public int getTotalEquipmentQuantity(){
-        int total = 0;
 
-        for (TransactionItem item : items){
-            if (item.getItem().getCategory().equalsIgnoreCase("Equipment")){
+    public int getTotalEquipmentQuantity() {
+        int total = 0;
+        for (TransactionItem item : items) {
+            if (item.getItem().isEquipment()) {
                 total += item.getQuantity();
             }
         }
         return total;
     }
-    public double getFacilityCharge(){
-        double total = 0;
-        for (TransactionItem item : items){
-            if (item.getItem().getCategory().equalsIgnoreCaase("Facility")){
+
+    public double getFacilityCharge() {
+        double total = 0.0;
+        for (TransactionItem item : items) {
+            if (item.getItem().isFacility()) {
                 total += item.getSubtotal();
             }
         }
         return total;
     }
-    public double calculateServiceCharge(){
-        double amountAfterDiscount = calculateSubtotal() - discountAmount;
-        serviceCharge = amountAfterDiscount * 0.10;
 
-        return serviceCharge;
-
+    public double calculateServiceCharge() {
+        double amountAfterDiscount = Math.max(0.0, calculateSubtotal() - discountAmount);
+        return amountAfterDiscount * 0.10;
     }
-    public double calculateFinalAmount(){
-        finalAmount = calculateSubtotal() - discountAmount + calculateServiceCharge();
+
+    public double calculateFinalAmount() {
+        finalAmount = Math.max(0.0, calculateSubtotal() - discountAmount) + calculateServiceCharge();
         return finalAmount;
     }
-    public void setSelectedPromotion(Promotion promotion){
 
+    public void setSelectedPromotion(Promotion promotion, double saving) {
+        this.selectedPromotion = promotion;
+        this.discountAmount = saving;
+        calculateFinalAmount();
     }
 
+    public void clearPromotion() {
+        this.selectedPromotion = null;
+        this.discountAmount = 0.0;
+        this.eligiblePromotionSummary.clear();
+        calculateFinalAmount();
+    }
 
+    public void setEligiblePromotionSummary(List<String> summary) {
+        this.eligiblePromotionSummary = summary;
+    }
 
+    public void setPayment(Payment payment) {
+        this.payment = payment;
+    }
+
+    public void markCompleted() {
+        this.completed = true;
+        calculateFinalAmount();
+    }
+
+    public void displayBill() {
+        System.out.println("\n========== TRANSACTION BILL ==========");
+        System.out.println("Transaction ID : " + transactionId);
+        System.out.println("Customer       : " + customer);
+        if (booking != null) {
+            System.out.println("Linked Booking : " + booking.getBookingId()
+                    + " (" + booking.getDate() + " " + booking.getTime()
+                    + ", " + booking.getParticipants() + " pax)");
+        } else {
+            System.out.println("Linked Booking : (walk-in / none)");
+        }
+        System.out.println("--------------------------------------");
+        System.out.println("Items:");
+        for (TransactionItem item : items) {
+            item.display();
+        }
+        System.out.println("--------------------------------------");
+        System.out.printf("Subtotal              : RM%.2f%n", calculateSubtotal());
+        System.out.printf("Facility charge       : RM%.2f%n", getFacilityCharge());
+
+        if (eligiblePromotionSummary.isEmpty()) {
+            System.out.println("Eligible promotions   : None");
+        } else {
+            System.out.println("Eligible promotions   :");
+            for (String line : eligiblePromotionSummary) {
+                System.out.println("  - " + line);
+            }
+        }
+
+        if (selectedPromotion != null) {
+            System.out.println("Selected promotion    : " + selectedPromotion.getCode()
+                    + " - " + selectedPromotion.getName());
+            System.out.printf("Discount amount       : RM%.2f%n", discountAmount);
+        } else {
+            System.out.println("Selected promotion    : None");
+            System.out.printf("Discount amount       : RM%.2f%n", 0.0);
+        }
+
+        System.out.printf("10%% Service charge    : RM%.2f%n", calculateServiceCharge());
+        System.out.printf("FINAL PAYABLE         : RM%.2f%n", calculateFinalAmount());
+        if (payment != null) {
+            System.out.println("Payment method        : " + payment.getPaymentMethod());
+        }
+        System.out.println("Status                : " + (completed ? "PAID" : "PENDING"));
+        System.out.println("======================================");
+    }
+
+    public String toFileLine() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(transactionId).append("|");
+        sb.append(customer.getName()).append("|");
+        sb.append(customer.getContactNumber()).append("|");
+        sb.append(booking == null ? "NONE" : booking.getBookingId()).append("|");
+        sb.append(String.format("%.2f", calculateSubtotal())).append("|");
+        sb.append(selectedPromotion == null ? "NONE" : selectedPromotion.getCode()).append("|");
+        sb.append(String.format("%.2f", discountAmount)).append("|");
+        sb.append(String.format("%.2f", calculateServiceCharge())).append("|");
+        sb.append(String.format("%.2f", calculateFinalAmount())).append("|");
+        sb.append(payment == null ? "NONE" : payment.getPaymentMethod()).append("|");
+        sb.append(completed ? "PAID" : "PENDING").append("|");
+
+        for (int i = 0; i < items.size(); i++) {
+            if (i > 0) {
+                sb.append(",");
+            }
+            sb.append(items.get(i).toFilePart());
+        }
+        return sb.toString();
+    }
 }
