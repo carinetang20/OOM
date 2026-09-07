@@ -13,8 +13,9 @@ public class CardPayment implements Payment {
 
     @Override
     public void processPayment(double amount) {
-        System.out.printf("Card payment of RM%.2f approved (card ending %s).%n",
-                amount, lastFourDigits);
+        ConsoleUI.blank();
+        ConsoleUI.success("Card payment of " + ConsoleUI.money(amount)
+                + " approved (card ending " + lastFourDigits + ").");
     }
 
     @Override

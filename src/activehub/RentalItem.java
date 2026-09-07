@@ -46,8 +46,18 @@ public class RentalItem {
     }
 
     public void displayItem() {
-        System.out.printf("%-8s %-30s %-12s RM%7.2f%n",
-                itemCode, itemName, category, rentalPrice);
+        String catLabel;
+        if (isEquipment()) {
+            catLabel = ConsoleUI.blue(String.format("%-12s", category));
+        } else if (isFacility()) {
+            catLabel = ConsoleUI.magenta(String.format("%-12s", category));
+        } else {
+            catLabel = ConsoleUI.cyan(String.format("%-12s", category));
+        }
+        // Keep alignment: print code/name, then coloured category, then price
+        System.out.printf("  %-8s %-30s ", itemCode, itemName);
+        System.out.print(catLabel);
+        System.out.printf(" %10s%n", ConsoleUI.money(rentalPrice));
     }
 
     /** Pipe-separated line for text-file storage. */

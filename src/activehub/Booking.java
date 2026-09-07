@@ -85,14 +85,21 @@ public class Booking {
     }
 
     public void displayBooking() {
-        System.out.printf("%-8s %-18s %-12s %-12s %-6s %-4d %-10s%n",
+        String statusLabel = isActive()
+                ? ConsoleUI.green(status)
+                : ConsoleUI.red(status);
+        String name = customer.getName();
+        if (name.length() > 16) {
+            name = name.substring(0, 15) + "…";
+        }
+        ConsoleUI.tableRow("%-8s %-16s %-8s %-12s %-6s %-4d %-10s",
                 bookingId,
-                customer.getName(),
+                name,
                 facility.getFacilityId(),
                 date.format(DATE_FMT),
                 time.format(TIME_FMT),
                 participants,
-                status);
+                statusLabel);
     }
 
     public String toFileLine() {

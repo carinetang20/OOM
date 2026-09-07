@@ -13,7 +13,8 @@ public class EWalletPayment implements Payment {
 
     @Override
     public void processPayment(double amount) {
-        System.out.printf("%s payment of RM%.2f successful.%n", walletName, amount);
+        ConsoleUI.blank();
+        ConsoleUI.success(walletName + " payment of " + ConsoleUI.money(amount) + " successful.");
     }
 
     @Override

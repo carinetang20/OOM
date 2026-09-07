@@ -9,7 +9,7 @@ import java.util.Map;
  */
 public class DailyReport {
     public void generate(List<Booking> bookings, List<Transaction> transactions) {
-        System.out.println("\n========== DAILY SUMMARY REPORT ==========");
+        ConsoleUI.section("DAILY SUMMARY REPORT");
 
         int activeBookings = 0;
         for (Booking b : bookings) {
@@ -17,7 +17,6 @@ public class DailyReport {
                 activeBookings++;
             }
         }
-        System.out.println("Total facility bookings (active) : " + activeBookings);
 
         int completedCount = 0;
         double totalRevenue = 0.0;
@@ -35,14 +34,11 @@ public class DailyReport {
                 }
 
                 for (TransactionItem ti : t.getItems()) {
-                    String key = ti.getItem().getItemCode() + " - " + ti.getItem().getItemName();
+                    String key = ti.getItem().getItemCode() + " — " + ti.getItem().getItemName();
                     itemFrequency.put(key, itemFrequency.getOrDefault(key, 0) + ti.getQuantity());
                 }
             }
         }
-
-        System.out.println("Total completed transactions     : " + completedCount);
-        System.out.printf("Total daily revenue              : RM%.2f%n", totalRevenue);
 
         String topItem = "N/A";
         int topQty = 0;
@@ -52,17 +48,31 @@ public class DailyReport {
                 topItem = e.getKey();
             }
         }
-        System.out.println("Most frequently rented item      : " + topItem
-                + (topQty > 0 ? " (qty " + topQty + ")" : ""));
 
-        System.out.println("Payment methods summary:");
+        ConsoleUI.boxTop();
+        ConsoleUI.boxCenter(ConsoleUI.bold("Today at ActiveHub"));
+        ConsoleUI.boxBlank();
+        ConsoleUI.boxRow("  Active facility bookings     "
+                + ConsoleUI.bold(String.valueOf(activeBookings)));
+        ConsoleUI.boxRow("  Completed transactions       "
+                + ConsoleUI.bold(String.valueOf(completedCount)));
+        ConsoleUI.boxRow("  Total daily revenue          "
+                + ConsoleUI.bold(ConsoleUI.green(ConsoleUI.money(totalRevenue))));
+        ConsoleUI.boxBlank();
+        ConsoleUI.boxRow("  Top rented item");
+        ConsoleUI.boxRow("    " + topItem
+                + (topQty > 0 ? ConsoleUI.dim("  × " + topQty) : ""));
+        ConsoleUI.boxBlank();
+        ConsoleUI.boxRow("  Payment methods");
         if (paymentMethods.isEmpty()) {
-            System.out.println("  (no completed payments yet)");
+            ConsoleUI.boxRow("    " + ConsoleUI.dim("(no completed payments yet)"));
         } else {
             for (Map.Entry<String, Integer> e : paymentMethods.entrySet()) {
-                System.out.println("  - " + e.getKey() + ": " + e.getValue());
+                ConsoleUI.boxRow("    • " + e.getKey() + "  "
+                        + ConsoleUI.bold(String.valueOf(e.getValue())));
             }
         }
-        System.out.println("==========================================");
+        ConsoleUI.boxBlank();
+        ConsoleUI.boxBottom();
     }
 }

@@ -33,8 +33,8 @@ public class TransactionItem {
     }
 
     public void display() {
-        System.out.printf("  %-8s %-28s x%-3d RM%8.2f%n",
-                item.getItemCode(), item.getItemName(), quantity, getSubtotal());
+        ConsoleUI.tableRow("%-8s %-28s %4d %10s",
+                item.getItemCode(), item.getItemName(), quantity, ConsoleUI.money(getSubtotal()));
     }
 
     public String toFilePart() {

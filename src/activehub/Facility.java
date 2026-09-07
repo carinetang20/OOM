@@ -27,7 +27,7 @@ public class Facility {
     }
 
     public void displayFacility() {
-        System.out.printf("%-8s %-28s %-15s%n", facilityId, facilityName, facilityType);
+        ConsoleUI.tableRow("%-8s %-28s %-15s", facilityId, facilityName, facilityType);
     }
 
     @Override

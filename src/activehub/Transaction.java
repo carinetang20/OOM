@@ -154,50 +154,63 @@ public class Transaction {
     }
 
     public void displayBill() {
-        System.out.println("\n========== TRANSACTION BILL ==========");
-        System.out.println("Transaction ID : " + transactionId);
-        System.out.println("Customer       : " + customer);
+        ConsoleUI.blank();
+        ConsoleUI.boxTop();
+        ConsoleUI.boxCenter(ConsoleUI.bold("TRANSACTION BILL"));
+        ConsoleUI.boxBottom();
+
+        ConsoleUI.kv("Transaction ID", ConsoleUI.bold(transactionId));
+        ConsoleUI.kv("Customer", customer.toString());
         if (booking != null) {
-            System.out.println("Linked Booking : " + booking.getBookingId()
-                    + " (" + booking.getDate() + " " + booking.getTime()
-                    + ", " + booking.getParticipants() + " pax)");
+            ConsoleUI.kv("Linked Booking", booking.getBookingId()
+                    + " · " + booking.getDate() + " " + booking.getTime()
+                    + " · " + booking.getParticipants() + " pax");
         } else {
-            System.out.println("Linked Booking : (walk-in / none)");
+            ConsoleUI.kv("Linked Booking", ConsoleUI.dim("walk-in / none"));
         }
-        System.out.println("--------------------------------------");
-        System.out.println("Items:");
+
+        ConsoleUI.dividerSoft();
+        ConsoleUI.info("Line items");
+        ConsoleUI.tableHeader("%-8s %-28s %4s %10s", "Code", "Item", "Qty", "Amount");
         for (TransactionItem item : items) {
             item.display();
         }
-        System.out.println("--------------------------------------");
-        System.out.printf("Subtotal              : RM%.2f%n", calculateSubtotal());
-        System.out.printf("Facility charge       : RM%.2f%n", getFacilityCharge());
+        ConsoleUI.line();
 
+        ConsoleUI.kv("Subtotal", ConsoleUI.money(calculateSubtotal()));
+        ConsoleUI.kv("Facility charge", ConsoleUI.money(getFacilityCharge()));
+
+        ConsoleUI.dividerSoft();
         if (eligiblePromotionSummary.isEmpty()) {
-            System.out.println("Eligible promotions   : None");
+            ConsoleUI.kv("Eligible promos", ConsoleUI.dim("None"));
         } else {
-            System.out.println("Eligible promotions   :");
+            ConsoleUI.info("Eligible promotions");
             for (String line : eligiblePromotionSummary) {
-                System.out.println("  - " + line);
+                System.out.println("    " + ConsoleUI.cyan("• ") + line);
             }
         }
 
         if (selectedPromotion != null) {
-            System.out.println("Selected promotion    : " + selectedPromotion.getCode()
-                    + " - " + selectedPromotion.getName());
-            System.out.printf("Discount amount       : RM%.2f%n", discountAmount);
+            ConsoleUI.kv("Selected promo", ConsoleUI.green(
+                    selectedPromotion.getCode() + " — " + selectedPromotion.getName()));
+            ConsoleUI.kv("Discount", ConsoleUI.yellow("- " + ConsoleUI.money(discountAmount)));
         } else {
-            System.out.println("Selected promotion    : None");
-            System.out.printf("Discount amount       : RM%.2f%n", 0.0);
+            ConsoleUI.kv("Selected promo", ConsoleUI.dim("None"));
+            ConsoleUI.kv("Discount", ConsoleUI.money(0.0));
         }
 
-        System.out.printf("10%% Service charge    : RM%.2f%n", calculateServiceCharge());
-        System.out.printf("FINAL PAYABLE         : RM%.2f%n", calculateFinalAmount());
+        ConsoleUI.kv("Service charge 10%", ConsoleUI.money(calculateServiceCharge()));
+        ConsoleUI.blank();
+        ConsoleUI.boxTop();
+        ConsoleUI.boxRow("  " + ConsoleUI.bold("FINAL PAYABLE")
+                + "                    "
+                + ConsoleUI.bold(ConsoleUI.green(ConsoleUI.money(calculateFinalAmount()))));
         if (payment != null) {
-            System.out.println("Payment method        : " + payment.getPaymentMethod());
+            ConsoleUI.boxRow("  Payment method : " + payment.getPaymentMethod());
         }
-        System.out.println("Status                : " + (completed ? "PAID" : "PENDING"));
-        System.out.println("======================================");
+        ConsoleUI.boxRow("  Status         : "
+                + (completed ? ConsoleUI.green("PAID") : ConsoleUI.yellow("PENDING")));
+        ConsoleUI.boxBottom();
     }
 
     public String toFileLine() {
