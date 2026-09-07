@@ -175,7 +175,6 @@ public class Transaction {
         for (TransactionItem item : items) {
             item.display();
         }
-        ConsoleUI.line();
 
         ConsoleUI.kv("Subtotal", ConsoleUI.money(calculateSubtotal()));
         ConsoleUI.kv("Facility charge", ConsoleUI.money(getFacilityCharge()));
@@ -193,7 +192,7 @@ public class Transaction {
         if (selectedPromotion != null) {
             ConsoleUI.kv("Selected promo", ConsoleUI.green(
                     selectedPromotion.getCode() + " — " + selectedPromotion.getName()));
-            ConsoleUI.kv("Discount", ConsoleUI.yellow("- " + ConsoleUI.money(discountAmount)));
+            ConsoleUI.kv("Discount", ConsoleUI.yellow("− " + ConsoleUI.money(discountAmount)));
         } else {
             ConsoleUI.kv("Selected promo", ConsoleUI.dim("None"));
             ConsoleUI.kv("Discount", ConsoleUI.money(0.0));

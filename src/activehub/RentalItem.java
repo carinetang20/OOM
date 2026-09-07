@@ -54,10 +54,10 @@ public class RentalItem {
         } else {
             catLabel = ConsoleUI.cyan(String.format("%-12s", category));
         }
-        // Keep alignment: print code/name, then coloured category, then price
         System.out.printf("  %-8s %-30s ", itemCode, itemName);
         System.out.print(catLabel);
-        System.out.printf(" %10s%n", ConsoleUI.money(rentalPrice));
+        System.out.printf(" %8s%n", ConsoleUI.money(rentalPrice));
+        ConsoleUI.line();
     }
 
     /** Pipe-separated line for text-file storage. */

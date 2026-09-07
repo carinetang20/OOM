@@ -9,7 +9,6 @@ import java.util.Scanner;
 
 /**
  * ActiveHub Sports Centre console application.
- * Facility booking, rental catalogue, transactions, promotions, payment, reports.
  */
 public class ActiveHubSystem {
     private final Scanner scanner;
@@ -24,7 +23,6 @@ public class ActiveHubSystem {
 
     private int bookingCounter;
     private int transactionCounter;
-    private boolean firstMenu = true;
 
     public ActiveHubSystem() {
         scanner = new Scanner(System.in);
@@ -64,20 +62,34 @@ public class ActiveHubSystem {
 
     private void seedFacilities() {
         facilities.add(new Facility("F01", "Badminton Court 1", "Badminton"));
+
         facilities.add(new Facility("F02", "Badminton Court 2", "Badminton"));
+
         facilities.add(new Facility("F03", "Futsal Court A", "Futsal"));
+
         facilities.add(new Facility("F04", "Basketball Court", "Basketball"));
+
         facilities.add(new Facility("F05", "Table Tennis Room", "Table Tennis"));
     }
 
     private void seedCatalogue() {
+        // Equipment (4)
         catalogue.add(new RentalItem("E01", "Badminton Racquet", "Equipment", 8.00));
+
         catalogue.add(new RentalItem("E02", "Shuttlecock Set", "Equipment", 5.00));
+
         catalogue.add(new RentalItem("E03", "Basketball", "Equipment", 6.00));
+
         catalogue.add(new RentalItem("E04", "Futsal Ball", "Equipment", 6.00));
+
+        // Facility packages (2)
         catalogue.add(new RentalItem("C01", "Badminton Court Package (1hr)", "Facility", 40.00));
+
         catalogue.add(new RentalItem("C02", "Futsal Court Package (1hr)", "Facility", 80.00));
+
+        // Accessories (2)
         catalogue.add(new RentalItem("A01", "Towel Set", "Accessory", 3.00));
+
         catalogue.add(new RentalItem("A02", "Locker Service", "Accessory", 4.00));
     }
 
@@ -105,15 +117,7 @@ public class ActiveHubSystem {
     }
 
     private void printMainMenu() {
-        if (!firstMenu) {
-            ConsoleUI.blank();
-        }
-        firstMenu = false;
-
-        ConsoleUI.boxTop();
-        ConsoleUI.boxCenter(ConsoleUI.bold("ACTIVEHUB SYSTEM"));
-        ConsoleUI.boxCenter(ConsoleUI.dim("Main Menu"));
-        ConsoleUI.boxBottom();
+        ConsoleUI.section("ACTIVEHUB SYSTEM");
         ConsoleUI.blank();
         ConsoleUI.menuItem(1, "Facility Booking", "create / view / cancel");
         ConsoleUI.menuItem(2, "View Rental Catalogue", "8 rental items");
@@ -122,17 +126,16 @@ public class ActiveHubSystem {
         ConsoleUI.menuItem(5, "Make Payment", "cash / card / e-wallet");
         ConsoleUI.menuItem(6, "Daily Report", "manager summary");
         ConsoleUI.menuItem(7, "Exit", "save & quit");
-        ConsoleUI.blank();
-        ConsoleUI.tip("Tip: dates use yyyy-MM-dd · times use HH:mm (24-hour)");
-        ConsoleUI.line();
+        ConsoleUI.tip("Dates: yyyy-MM-dd   ·   Times: HH:mm (24-hour)");
     }
 
-    // -------------------- Module 1: Facility Booking --------------------
+    // -------------------- Module 1 --------------------
 
     private void facilityBookingMenu() {
         int choice;
         do {
-            ConsoleUI.section("FACILITY BOOKING MODULE");
+            ConsoleUI.section("FACILITY BOOKING");
+            ConsoleUI.blank();
             ConsoleUI.menuItem(1, "Create Booking");
             ConsoleUI.menuItem(2, "View All Bookings");
             ConsoleUI.menuItem(3, "Cancel Booking");
@@ -150,7 +153,7 @@ public class ActiveHubSystem {
     }
 
     private void createBooking() {
-        ConsoleUI.section("Create Facility Booking");
+        ConsoleUI.section("Create Booking");
         String name = readNonEmpty("Customer name: ");
         String contact = readNonEmpty("Contact number: ");
         LocalDate date = readDate("Booking date (yyyy-MM-dd): ");
@@ -163,7 +166,6 @@ public class ActiveHubSystem {
         for (Facility f : facilities) {
             f.displayFacility();
         }
-        ConsoleUI.line();
 
         Facility facility = null;
         while (facility == null) {
@@ -214,7 +216,7 @@ public class ActiveHubSystem {
     private void viewBookings() {
         ConsoleUI.section("All Bookings");
         if (bookings.isEmpty()) {
-            ConsoleUI.warn("No bookings found yet.");
+            ConsoleUI.warn("No bookings found.");
             return;
         }
         ConsoleUI.tableHeader("%-8s %-16s %-8s %-12s %-6s %-4s %-10s",
@@ -222,8 +224,7 @@ public class ActiveHubSystem {
         for (Booking b : bookings) {
             b.displayBooking();
         }
-        ConsoleUI.line();
-        ConsoleUI.tip("Total records: " + bookings.size());
+        ConsoleUI.tip("Total: " + bookings.size());
     }
 
     private void cancelBooking() {
@@ -246,24 +247,24 @@ public class ActiveHubSystem {
         ConsoleUI.success("Booking " + id + " cancelled.");
     }
 
-    // -------------------- Module 2: Catalogue --------------------
+    // -------------------- Module 2 --------------------
 
     private void viewCatalogue() {
         ConsoleUI.section("RENTAL CATALOGUE");
-        ConsoleUI.tableHeader("%-8s %-30s %-12s %10s", "Code", "Item Name", "Category", "Price");
+        ConsoleUI.tableHeader("%-8s %-30s %-12s %8s", "Code", "Item Name", "Category", "Price");
         for (RentalItem item : catalogue) {
             item.displayItem();
         }
-        ConsoleUI.line();
-        ConsoleUI.tip("Equipment · Facility · Accessory   |   8 items total");
+        ConsoleUI.tip("Equipment · Facility · Accessory  |  8 items");
     }
 
-    // -------------------- Module 3: Transaction --------------------
+    // -------------------- Module 3 --------------------
 
     private void createOrUpdateTransaction() {
         ConsoleUI.section("RENTAL TRANSACTION");
+        ConsoleUI.blank();
         ConsoleUI.menuItem(1, "Create New Transaction");
-        ConsoleUI.menuItem(2, "Update Existing Transaction", "add more items");
+        ConsoleUI.menuItem(2, "Update Existing Transaction", "add items");
         ConsoleUI.menuItem(3, "View All Transactions");
         ConsoleUI.blank();
         int choice = readInt("Select option [1-3]: ");
@@ -276,7 +277,7 @@ public class ActiveHubSystem {
     }
 
     private void createTransaction() {
-        ConsoleUI.section("New Rental Transaction");
+        ConsoleUI.section("New Transaction");
         String name = readNonEmpty("Customer name: ");
         String contact = readNonEmpty("Contact number: ");
         Customer customer = new Customer(name, contact);
@@ -308,7 +309,7 @@ public class ActiveHubSystem {
         transactions.add(tx);
         tx.displayBill();
         ConsoleUI.success("Transaction " + txId + " created.");
-        ConsoleUI.tip("Next: use menu [4] to apply the best promotion.");
+        ConsoleUI.tip("Next: use menu [4] to apply promotion.");
     }
 
     private void updateTransaction() {
@@ -336,7 +337,7 @@ public class ActiveHubSystem {
             }
             RentalItem item = findCatalogueItem(code);
             if (item == null) {
-                ConsoleUI.error("Item not found. Check the catalogue codes.");
+                ConsoleUI.error("Item not found.");
                 continue;
             }
             int qty = readPositiveInt("Quantity: ");
@@ -364,14 +365,13 @@ public class ActiveHubSystem {
                     ConsoleUI.money(t.calculateFinalAmount()),
                     status);
         }
-        ConsoleUI.line();
     }
 
-    // -------------------- Module 4: Promotion --------------------
+    // -------------------- Module 4 --------------------
 
     private void applyPromotion() {
         ConsoleUI.section("APPLY PROMOTION");
-        ConsoleUI.tip("System evaluates A / B / C and applies the single best saving.");
+        ConsoleUI.tip("System picks the single best saving from A / B / C.");
         Transaction tx = selectPendingTransaction("apply promotion");
         if (tx == null) {
             return;
@@ -379,15 +379,14 @@ public class ActiveHubSystem {
         promotionEngine.applyBestPromotion(tx);
         tx.displayBill();
         if (tx.getSelectedPromotion() != null) {
-            ConsoleUI.success("Applied promotion "
-                    + tx.getSelectedPromotion().getCode() + " — "
-                    + tx.getSelectedPromotion().getName());
+            ConsoleUI.success("Applied " + tx.getSelectedPromotion().getCode()
+                    + " — " + tx.getSelectedPromotion().getName());
         } else {
             ConsoleUI.warn("No eligible promotion for this transaction.");
         }
     }
 
-    // -------------------- Module 5: Payment --------------------
+    // -------------------- Module 5 --------------------
 
     private void makePayment() {
         ConsoleUI.section("MAKE PAYMENT");
@@ -458,7 +457,6 @@ public class ActiveHubSystem {
                     truncate(t.getCustomer().getName(), 20),
                     ConsoleUI.money(t.calculateSubtotal()));
         }
-        ConsoleUI.line();
         String id = readNonEmpty("Enter transaction ID: ");
         Transaction tx = findTransaction(id);
         if (tx == null) {

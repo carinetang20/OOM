@@ -49,6 +49,7 @@ public class DailyReport {
             }
         }
 
+        ConsoleUI.blank();
         ConsoleUI.boxTop();
         ConsoleUI.boxCenter(ConsoleUI.bold("Today at ActiveHub"));
         ConsoleUI.boxBlank();
@@ -59,7 +60,7 @@ public class DailyReport {
         ConsoleUI.boxRow("  Total daily revenue          "
                 + ConsoleUI.bold(ConsoleUI.green(ConsoleUI.money(totalRevenue))));
         ConsoleUI.boxBlank();
-        ConsoleUI.boxRow("  Top rented item");
+        ConsoleUI.boxRow("  Most rented item");
         ConsoleUI.boxRow("    " + topItem
                 + (topQty > 0 ? ConsoleUI.dim("  × " + topQty) : ""));
         ConsoleUI.boxBlank();
