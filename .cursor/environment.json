@@ -1,0 +1,4 @@
+{
+  "name": "ActiveHub Sports Centre (Java 21)",
+  "install": "javac -d out/classes src/Main.java src/activehub/*.java"
+}
