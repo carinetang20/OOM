@@ -56,8 +56,42 @@ public class ActiveHubSystem {
         }
 
         bookings.addAll(fileManager.loadBookings(facilities));
-        bookingCounter = bookings.size();
-        transactionCounter = 0;
+        bookingCounter = highestBookingId(bookings);
+
+        transactions.addAll(fileManager.loadTransactions(bookings, catalogue));
+        transactionCounter = highestTransactionId(transactions);
+    }
+
+    /**
+     * Finds the highest numeric suffix among booking IDs so new IDs continue
+     * from the saved data instead of colliding with existing records.
+     */
+    private int highestBookingId(List<Booking> loadedBookings) {
+        int max = 0;
+        for (Booking b : loadedBookings) {
+            max = Math.max(max, numericSuffix(b.getBookingId()));
+        }
+        return max;
+    }
+
+    private int highestTransactionId(List<Transaction> loadedTransactions) {
+        int max = 0;
+        for (Transaction t : loadedTransactions) {
+            max = Math.max(max, numericSuffix(t.getTransactionId()));
+        }
+        return max;
+    }
+
+    private int numericSuffix(String id) {
+        String digits = id.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(digits);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private void seedFacilities() {

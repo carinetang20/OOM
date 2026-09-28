@@ -17,6 +17,22 @@ public class PromotionEngine {
         promotions.add(new EquipmentBundleDiscount());
     }
 
+    /**
+     * Rebuilds a promotion instance from its code (used when loading saved
+     * transactions back from the text file).
+     */
+    public static Promotion fromCode(String code) {
+        if (code == null) {
+            return null;
+        }
+        return switch (code.trim().toUpperCase()) {
+            case "A" -> new OffPeakSaver();
+            case "B" -> new TeamBookingReward();
+            case "C" -> new EquipmentBundleDiscount();
+            default -> null;
+        };
+    }
+
     public void applyBestPromotion(Transaction transaction) {
         List<String> eligibleLines = new ArrayList<>();
         Promotion best = null;
