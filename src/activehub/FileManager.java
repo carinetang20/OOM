@@ -154,10 +154,117 @@ public class FileManager {
         }
     }
 
+    /**
+     * Rebuilds saved transactions so they survive across program runs.
+     * References to bookings and catalogue items are resolved from the
+     * already-loaded lists so object relationships are restored, not copied.
+     */
+    public List<Transaction> loadTransactions(List<Booking> bookings, List<RentalItem> catalogue) {
+        List<Transaction> list = new ArrayList<>();
+        File file = new File(path("transactions.txt"));
+        if (!file.exists()) {
+            return list;
+        }
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
+                String[] p = line.split("\\|", -1);
+                if (p.length < 11) {
+                    continue;
+                }
+
+                Customer customer = new Customer(p[1], p[2]);
+                Booking booking = "NONE".equalsIgnoreCase(p[3])
+                        ? null
+                        : findBooking(bookings, p[3]);
+                Transaction tx = new Transaction(p[0], customer, booking);
+
+                if (p.length > 11 && !p[11].trim().isEmpty()) {
+                    for (String part : p[11].split(",")) {
+                        String[] kv = part.split(":");
+                        if (kv.length < 2) {
+                            continue;
+                        }
+                        RentalItem item = findItem(catalogue, kv[0]);
+                        if (item != null) {
+                            tx.addItem(item, Integer.parseInt(kv[1].trim()));
+                        }
+                    }
+                }
+
+                if (!"NONE".equalsIgnoreCase(p[5])) {
+                    Promotion promo = PromotionEngine.fromCode(p[5]);
+                    if (promo != null) {
+                        tx.setSelectedPromotion(promo, parseAmount(p[6]));
+                    }
+                }
+
+                if (!"NONE".equalsIgnoreCase(p[9])) {
+                    Payment payment = reconstructPayment(p[9]);
+                    if (payment != null) {
+                        tx.setPayment(payment);
+                    }
+                }
+
+                if ("PAID".equalsIgnoreCase(p[10])) {
+                    tx.markCompleted();
+                }
+
+                list.add(tx);
+            }
+        } catch (Exception e) {
+            System.out.println("Error loading transactions: " + e.getMessage());
+        }
+        return list;
+    }
+
+    private double parseAmount(String text) {
+        try {
+            return Double.parseDouble(text.trim());
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
+    private Payment reconstructPayment(String method) {
+        String value = method.trim();
+        if (value.equalsIgnoreCase("Cash")) {
+            return new CashPayment();
+        }
+        if (value.toLowerCase().contains("card")) {
+            return new CardPayment();
+        }
+        if (value.toLowerCase().contains("wallet")) {
+            return new EWalletPayment();
+        }
+        return null;
+    }
+
     private Facility findFacility(List<Facility> facilities, String id) {
         for (Facility f : facilities) {
             if (f.getFacilityId().equalsIgnoreCase(id)) {
                 return f;
+            }
+        }
+        return null;
+    }
+
+    private Booking findBooking(List<Booking> bookings, String id) {
+        for (Booking b : bookings) {
+            if (b.getBookingId().equalsIgnoreCase(id)) {
+                return b;
+            }
+        }
+        return null;
+    }
+
+    private RentalItem findItem(List<RentalItem> catalogue, String code) {
+        for (RentalItem item : catalogue) {
+            if (item.getItemCode().equalsIgnoreCase(code.trim())) {
+                return item;
             }
         }
         return null;

@@ -11,6 +11,7 @@ public class DailyReport {
     public void generate(List<Booking> bookings, List<Transaction> transactions) {
         ConsoleUI.section("DAILY SUMMARY REPORT");
 
+        int totalBookings = bookings.size();
         int activeBookings = 0;
         for (Booking b : bookings) {
             if (b.isActive()) {
@@ -53,8 +54,9 @@ public class DailyReport {
         ConsoleUI.boxTop();
         ConsoleUI.boxCenter(ConsoleUI.bold("Today at ActiveHub"));
         ConsoleUI.boxBlank();
-        ConsoleUI.boxRow("  Active facility bookings     "
-                + ConsoleUI.bold(String.valueOf(activeBookings)));
+        ConsoleUI.boxRow("  Total facility bookings      "
+                + ConsoleUI.bold(String.valueOf(totalBookings))
+                + ConsoleUI.dim("  (" + activeBookings + " active)"));
         ConsoleUI.boxRow("  Completed transactions       "
                 + ConsoleUI.bold(String.valueOf(completedCount)));
         ConsoleUI.boxRow("  Total daily revenue          "
