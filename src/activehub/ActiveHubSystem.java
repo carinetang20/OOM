@@ -119,14 +119,13 @@ public class ActiveHubSystem {
     private void printMainMenu() {
         ConsoleUI.section("ACTIVEHUB SYSTEM");
         ConsoleUI.blank();
-        ConsoleUI.menuItem(1, "Facility Booking", "create / view / cancel");
-        ConsoleUI.menuItem(2, "View Rental Catalogue", "8 rental items");
-        ConsoleUI.menuItem(3, "Create Rental Transaction", "new / update / list");
-        ConsoleUI.menuItem(4, "Apply Promotion", "best of A / B / C");
-        ConsoleUI.menuItem(5, "Make Payment", "cash / card / e-wallet");
-        ConsoleUI.menuItem(6, "Daily Report", "manager summary");
-        ConsoleUI.menuItem(7, "Exit", "save & quit");
-        ConsoleUI.tip("Dates: yyyy-MM-dd   ·   Times: HH:mm (24-hour)");
+        ConsoleUI.menuItem(1, "Facility Booking" );
+        ConsoleUI.menuItem(2, "View Rental Catalogue");
+        ConsoleUI.menuItem(3, "Create Rental Transaction");
+        ConsoleUI.menuItem(4, "Apply Promotion");
+        ConsoleUI.menuItem(5, "Make Payment");
+        ConsoleUI.menuItem(6, "Daily Report");
+        ConsoleUI.menuItem(7, "Exit");
     }
 
     // -------------------- Module 1 --------------------
