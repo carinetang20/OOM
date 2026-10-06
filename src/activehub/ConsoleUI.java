@@ -1,5 +1,7 @@
 package activehub;
 
+import java.util.List;
+
 /**
  * Shared console styling for ActiveHub.
  * Clean boxes, colour, and aligned menus (optional ANSI).
@@ -75,22 +77,24 @@ public final class ConsoleUI {
         System.out.println(cyan("  " + "─".repeat(WIDTH)));
     }
 
+    public static void dotBarrier() {
+        System.out.println(dim("  " + "·".repeat(WIDTH)));
+    }
+
     public static void boxTop() {
-        System.out.println(cyan("  ╭" + "─".repeat(WIDTH) + "╮"));
+        drawBoxTop(WIDTH);
     }
 
     public static void boxBottom() {
-        System.out.println(cyan("  ╰" + "─".repeat(WIDTH) + "╯"));
+        drawBoxBottom(WIDTH);
+    }
+
+    public static void boxDivider() {
+        drawBoxDivider(WIDTH);
     }
 
     public static void boxRow(String content) {
-        String plain = stripAnsi(content);
-        int pad = WIDTH - plain.length();
-        if (pad < 0) {
-            System.out.println(cyan("  │") + content + cyan("│"));
-            return;
-        }
-        System.out.println(cyan("  │") + content + " ".repeat(pad) + cyan("│"));
+        drawBoxRow(content, WIDTH);
     }
 
     public static void boxBlank() {
@@ -98,8 +102,51 @@ public final class ConsoleUI {
     }
 
     public static void boxCenter(String content) {
+        drawBoxCenter(content, WIDTH);
+    }
+
+    /**
+     * Label on the left, leader dots, value on the right — keeps figures aligned.
+     */
+    public static void boxKeyValue(String key, String value) {
+        String left = "  " + key + " ";
+        String right = " " + value + " ";
+        int gap = WIDTH - visibleLen(left) - visibleLen(right);
+        if (gap < 2) {
+            gap = 2;
+        }
+        boxRow(left + dim("·".repeat(gap)) + right);
+    }
+
+    public static void boxSectionLabel(String label) {
+        boxRow("  " + cyan(label));
+    }
+
+    private static void drawBoxTop(int width) {
+        System.out.println(cyan("  ╭" + "─".repeat(width) + "╮"));
+    }
+
+    private static void drawBoxBottom(int width) {
+        System.out.println(cyan("  ╰" + "─".repeat(width) + "╯"));
+    }
+
+    private static void drawBoxDivider(int width) {
+        System.out.println(cyan("  ├" + "─".repeat(width) + "┤"));
+    }
+
+    private static void drawBoxRow(String content, int width) {
         String plain = stripAnsi(content);
-        int pad = Math.max(0, WIDTH - plain.length());
+        int pad = width - plain.length();
+        if (pad < 0) {
+            System.out.println(cyan("  │") + content + cyan("│"));
+            return;
+        }
+        System.out.println(cyan("  │") + content + " ".repeat(pad) + cyan("│"));
+    }
+
+    private static void drawBoxCenter(String content, int width) {
+        String plain = stripAnsi(content);
+        int pad = Math.max(0, width - plain.length());
         int left = pad / 2;
         int right = pad - left;
         System.out.println(cyan("  │") + " ".repeat(left) + content + " ".repeat(right) + cyan("│"));
@@ -112,15 +159,29 @@ public final class ConsoleUI {
         boxBottom();
     }
 
+    /**
+     * One boxed menu: title on top, numbered options inside the same frame.
+     */
+    public static void menu(String title, String... options) {
+        blank();
+        boxTop();
+        boxCenter(bold(title));
+        boxDivider();
+        boxBlank();
+        for (int i = 0; i < options.length; i++) {
+            boxRow("  " + cyan(bold("[" + (i + 1) + "]")) + "  " + options[i]);
+        }
+        boxBlank();
+        boxBottom();
+    }
+
     public static void menuItem(int number, String label) {
-        System.out.println("   " + cyan(bold("[" + number + "]")) + "  " + label);
-        line();
+        boxRow("  " + cyan(bold("[" + number + "]")) + "  " + label);
     }
 
     public static void menuItem(int number, String label, String hint) {
-        System.out.println("   " + cyan(bold("[" + number + "]")) + "  " + label
+        boxRow("  " + cyan(bold("[" + number + "]")) + "  " + label
                 + dim("  — " + hint));
-        line();
     }
 
     public static void prompt(String text) {
@@ -157,14 +218,101 @@ public final class ConsoleUI {
         System.out.println("  " + dim(key) + " ".repeat(pad) + value);
     }
 
-    public static void tableHeader(String format, Object... cols) {
-        System.out.println("  " + bold(String.format(format, cols)));
-        line();
+    /**
+     * Boxed table. Columns are padded using visible (non-ANSI) length so
+     * colours do not break alignment. Numeric columns can be right-aligned.
+     * Headers are cyan, not bold, so IntelliJ keeps a monospace grid.
+     */
+    public static void boxedTable(String title, String[] headers, boolean[] rightAlign,
+                                  List<String[]> rows, String footer) {
+        int n = headers.length;
+        int[] widths = new int[n];
+        for (int i = 0; i < n; i++) {
+            widths[i] = visibleLen(headers[i]);
+        }
+        if (rows != null) {
+            for (String[] row : rows) {
+                for (int i = 0; i < n && i < row.length; i++) {
+                    widths[i] = Math.max(widths[i], visibleLen(row[i]));
+                }
+            }
+        }
+
+        int inner = 1;
+        for (int i = 0; i < n; i++) {
+            inner += widths[i];
+            if (i < n - 1) {
+                inner += 2;
+            }
+        }
+        inner += 1;
+        if (footer != null) {
+            inner = Math.max(inner, visibleLen(footer) + 4);
+        }
+        inner = Math.max(inner, visibleLen(title) + 4);
+        inner = Math.max(inner, WIDTH);
+
+        blank();
+        drawBoxTop(inner);
+        drawBoxCenter(bold(title), inner);
+        drawBoxDivider(inner);
+        drawBoxRow(formatCells(headers, widths, rightAlign, true), inner);
+        drawBoxDivider(inner);
+        if (rows == null || rows.isEmpty()) {
+            drawBoxRow("  (none)", inner);
+        } else {
+            for (String[] row : rows) {
+                drawBoxRow(formatCells(row, widths, rightAlign, false), inner);
+            }
+        }
+        if (footer != null) {
+            drawBoxDivider(inner);
+            drawBoxRow("  " + dim(footer), inner);
+        }
+        drawBoxBottom(inner);
     }
 
-    public static void tableRow(String format, Object... cols) {
-        System.out.println("  " + String.format(format, cols));
-        line();
+    public static void boxedTable(String title, String[] headers, boolean[] rightAlign,
+                                  List<String[]> rows) {
+        boxedTable(title, headers, rightAlign, rows, null);
+    }
+
+    private static String formatCells(String[] cells, int[] widths, boolean[] rightAlign,
+                                      boolean header) {
+        StringBuilder sb = new StringBuilder(" ");
+        for (int i = 0; i < widths.length; i++) {
+            if (i > 0) {
+                sb.append("  ");
+            }
+            String raw = (i < cells.length && cells[i] != null) ? cells[i] : "";
+            boolean right = rightAlign != null && i < rightAlign.length && rightAlign[i];
+            String cell = alignVisible(raw, widths[i], right);
+            if (header) {
+                cell = cyan(cell);
+            }
+            sb.append(cell);
+        }
+        return sb.toString();
+    }
+
+    public static int visibleLen(String text) {
+        return stripAnsi(text == null ? "" : text).length();
+    }
+
+    public static String alignVisible(String text, int width, boolean right) {
+        if (text == null) {
+            text = "";
+        }
+        String plain = stripAnsi(text);
+        if (plain.length() > width) {
+            text = plain.substring(0, Math.max(0, width - 1)) + "…";
+        }
+        int pad = width - visibleLen(text);
+        if (pad <= 0) {
+            return text;
+        }
+        String spaces = " ".repeat(pad);
+        return right ? spaces + text : text + spaces;
     }
 
     public static void dividerSoft() {

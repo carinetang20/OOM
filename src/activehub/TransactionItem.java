@@ -32,9 +32,13 @@ public class TransactionItem {
         return item.getRentalPrice() * quantity;
     }
 
-    public void display() {
-        ConsoleUI.tableRow("%-8s %-28s %4d %10s",
-                item.getItemCode(), item.getItemName(), quantity, ConsoleUI.money(getSubtotal()));
+    public String[] toTableRow() {
+        return new String[] {
+                item.getItemCode(),
+                item.getItemName(),
+                String.valueOf(quantity),
+                ConsoleUI.money(getSubtotal())
+        };
     }
 
     public String toFilePart() {

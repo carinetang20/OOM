@@ -73,7 +73,8 @@ public class Booking {
     }
 
     /**
-     * Conflict check: same facility, same date, same start time, and still active.
+     * Same court + same LocalDate + same LocalTime + still ACTIVE.
+     * Cancelled bookings do not block a new reservation.
      */
     public boolean conflictsWith(Facility otherFacility, LocalDate otherDate, LocalTime otherTime) {
         if (!isActive()) {
@@ -84,22 +85,19 @@ public class Booking {
                 && time.equals(otherTime);
     }
 
-    public void displayBooking() {
+    public String[] toTableRow() {
         String statusLabel = isActive()
                 ? ConsoleUI.green(status)
                 : ConsoleUI.red(status);
-        String name = customer.getName();
-        if (name.length() > 16) {
-            name = name.substring(0, 15) + "…";
-        }
-        ConsoleUI.tableRow("%-8s %-16s %-8s %-12s %-6s %-4d %-10s",
+        return new String[] {
                 bookingId,
-                name,
+                customer.getName(),
                 facility.getFacilityId(),
                 date.format(DATE_FMT),
                 time.format(TIME_FMT),
-                participants,
-                statusLabel);
+                String.valueOf(participants),
+                statusLabel
+        };
     }
 
     public String toFileLine() {

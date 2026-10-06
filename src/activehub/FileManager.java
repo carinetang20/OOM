@@ -154,6 +154,104 @@ public class FileManager {
         }
     }
 
+    public List<Transaction> loadTransactions(List<RentalItem> catalogue,
+                                              List<Booking> bookings,
+                                              PromotionEngine engine) {
+        List<Transaction> list = new ArrayList<>();
+        File file = new File(path("transactions.txt"));
+        if (!file.exists()) {
+            return list;
+        }
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
+                Transaction tx = parseTransaction(line.trim(), catalogue, bookings, engine);
+                if (tx != null) {
+                    list.add(tx);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error loading transactions: " + e.getMessage());
+        }
+        return list;
+    }
+
+    private Transaction parseTransaction(String line, List<RentalItem> catalogue,
+                                         List<Booking> bookings, PromotionEngine engine) {
+        String[] p = line.split("\\|", -1);
+        if (p.length < 12) {
+            return null;
+        }
+        Customer customer = new Customer(p[1], p[2]);
+        Booking booking = "NONE".equalsIgnoreCase(p[3]) ? null : findBooking(bookings, p[3]);
+        Transaction tx = new Transaction(p[0], customer, booking);
+
+        if (!p[11].isEmpty()) {
+            String[] parts = p[11].split(",");
+            for (String part : parts) {
+                String[] iq = part.split(":");
+                if (iq.length != 2) {
+                    continue;
+                }
+                RentalItem item = findItem(catalogue, iq[0]);
+                if (item != null) {
+                    tx.addItem(item, Integer.parseInt(iq[1]));
+                }
+            }
+        }
+
+        Promotion promo = engine.findByCode(p[5]);
+        if (promo != null) {
+            tx.setSelectedPromotion(promo, Double.parseDouble(p[6]));
+        }
+
+        Payment payment = reconstructPayment(p[9]);
+        if (payment != null) {
+            tx.setPayment(payment);
+        }
+        if ("PAID".equalsIgnoreCase(p[10])) {
+            tx.markCompleted();
+        }
+        return tx;
+    }
+
+    private Payment reconstructPayment(String method) {
+        if (method == null || method.isEmpty() || "NONE".equalsIgnoreCase(method)) {
+            return null;
+        }
+        if (method.toLowerCase().contains("card")) {
+            return new CardPayment();
+        }
+        if (method.toLowerCase().contains("wallet")) {
+            return new EWalletPayment();
+        }
+        if (method.equalsIgnoreCase("Cash")) {
+            return new CashPayment();
+        }
+        return null;
+    }
+
+    private Booking findBooking(List<Booking> bookings, String id) {
+        for (Booking b : bookings) {
+            if (b.getBookingId().equalsIgnoreCase(id)) {
+                return b;
+            }
+        }
+        return null;
+    }
+
+    private RentalItem findItem(List<RentalItem> catalogue, String code) {
+        for (RentalItem item : catalogue) {
+            if (item.getItemCode().equalsIgnoreCase(code)) {
+                return item;
+            }
+        }
+        return null;
+    }
+
     private Facility findFacility(List<Facility> facilities, String id) {
         for (Facility f : facilities) {
             if (f.getFacilityId().equalsIgnoreCase(id)) {

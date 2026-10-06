@@ -1,10 +1,17 @@
 package activehub;
 
 /**
- * Common contract for payment methods (polymorphism).
+ * Abstract payment method. Cash, card and e-wallet inherit this class
+ * and override processPayment (inheritance + polymorphism).
  */
-public interface Payment {
-    void processPayment(double amount);
+public abstract class Payment {
+    protected double amountPaid;
 
-    String getPaymentMethod();
+    public double getAmountPaid() {
+        return amountPaid;
+    }
+
+    public abstract void processPayment(double amount);
+
+    public abstract String getPaymentMethod();
 }

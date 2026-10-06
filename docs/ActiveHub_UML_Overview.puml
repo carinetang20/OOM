@@ -1,0 +1,63 @@
+@startuml ActiveHub_UML_Overview
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide members
+hide circle
+title Figure A.0 — Relationship overview (read this first)
+
+class Customer
+class Facility
+class Booking
+class Transaction
+class TransactionItem
+abstract class RentalItem
+class EquipmentItem
+class FacilityPackage
+class AccessoryItem
+abstract class Promotion
+class OffPeakSaver
+class TeamBookingReward
+class EquipmentBundleDiscount
+class PromotionEngine
+abstract class Payment
+class CashPayment
+class CardPayment
+class EWalletPayment
+class ActiveHubSystem
+class FileManager
+class DailyReport
+class Main
+
+Customer "1" -- "0..*" Booking : places >
+Facility "1" -- "0..*" Booking : reserved for <
+Customer "1" -- "0..*" Transaction : billed to >
+Booking "0..1" -- "0..*" Transaction : may link
+Transaction "1" *-- "1..*" TransactionItem : composition
+RentalItem "1" -- "0..*" TransactionItem : describes
+Transaction "0..1" -- "0..1" Promotion : selected
+Transaction "0..1" -- "0..1" Payment : paid with
+
+RentalItem <|-- EquipmentItem
+RentalItem <|-- FacilityPackage
+RentalItem <|-- AccessoryItem
+Promotion <|-- OffPeakSaver
+Promotion <|-- TeamBookingReward
+Promotion <|-- EquipmentBundleDiscount
+Payment <|-- CashPayment
+Payment <|-- CardPayment
+Payment <|-- EWalletPayment
+
+ActiveHubSystem o-- "*" Booking : aggregation
+ActiveHubSystem o-- "*" Transaction
+ActiveHubSystem o-- "*" RentalItem
+ActiveHubSystem o-- "*" Facility
+ActiveHubSystem o-- "1" FileManager
+ActiveHubSystem o-- "1" DailyReport
+ActiveHubSystem o-- "1" PromotionEngine
+PromotionEngine o-- "3" Promotion
+Main ..> ActiveHubSystem
+
+legend bottom
+  ◆ composition   ◇ aggregation   —— association   <|—— inheritance
+endlegend
+@enduml

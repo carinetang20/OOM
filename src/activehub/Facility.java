@@ -26,8 +26,8 @@ public class Facility {
         return facilityType;
     }
 
-    public void displayFacility() {
-        ConsoleUI.tableRow("%-8s %-28s %-15s", facilityId, facilityName, facilityType);
+    public String[] toTableRow() {
+        return new String[] { facilityId, facilityName, facilityType };
     }
 
     @Override

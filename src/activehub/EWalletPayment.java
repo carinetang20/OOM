@@ -1,6 +1,6 @@
 package activehub;
 
-public class EWalletPayment implements Payment {
+public class EWalletPayment extends Payment {
     private String walletName;
 
     public EWalletPayment() {
@@ -13,6 +13,7 @@ public class EWalletPayment implements Payment {
 
     @Override
     public void processPayment(double amount) {
+        this.amountPaid = amount;
         ConsoleUI.blank();
         ConsoleUI.success(walletName + " payment of " + ConsoleUI.money(amount) + " successful.");
     }

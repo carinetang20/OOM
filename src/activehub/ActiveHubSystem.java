@@ -9,6 +9,8 @@ import java.util.Scanner;
 
 /**
  * ActiveHub Sports Centre console application.
+ * Orchestrates booking, catalogue, transaction, promotion, payment and report
+ * modules. Collections are aggregated here and persisted through FileManager.
  */
 public class ActiveHubSystem {
     private final Scanner scanner;
@@ -56,8 +58,27 @@ public class ActiveHubSystem {
         }
 
         bookings.addAll(fileManager.loadBookings(facilities));
-        bookingCounter = bookings.size();
+        bookingCounter = 0;
+        for (Booking b : bookings) {
+            bookingCounter = Math.max(bookingCounter, parseNumericId(b.getBookingId()));
+        }
+
+        transactions.addAll(fileManager.loadTransactions(catalogue, bookings, promotionEngine));
         transactionCounter = 0;
+        for (Transaction t : transactions) {
+            transactionCounter = Math.max(transactionCounter, parseNumericId(t.getTransactionId()));
+        }
+    }
+
+    private int parseNumericId(String id) {
+        if (id == null || id.length() < 2) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(id.substring(1));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private void seedFacilities() {
@@ -74,23 +95,18 @@ public class ActiveHubSystem {
 
     private void seedCatalogue() {
         // Equipment (4)
-        catalogue.add(new RentalItem("E01", "Badminton Racquet", "Equipment", 8.00));
-
-        catalogue.add(new RentalItem("E02", "Shuttlecock Set", "Equipment", 5.00));
-
-        catalogue.add(new RentalItem("E03", "Basketball", "Equipment", 6.00));
-
-        catalogue.add(new RentalItem("E04", "Futsal Ball", "Equipment", 6.00));
+        catalogue.add(new EquipmentItem("E01", "Badminton Racquet", 8.00));
+        catalogue.add(new EquipmentItem("E02", "Shuttlecock Set", 5.00));
+        catalogue.add(new EquipmentItem("E03", "Basketball", 6.00));
+        catalogue.add(new EquipmentItem("E04", "Futsal Ball", 6.00));
 
         // Facility packages (2)
-        catalogue.add(new RentalItem("C01", "Badminton Court Package (1hr)", "Facility", 40.00));
+        catalogue.add(new FacilityPackage("C01", "Badminton Court Package (1hr)", 40.00));
+        catalogue.add(new FacilityPackage("C02", "Futsal Court Package (1hr)", 80.00));
 
-        catalogue.add(new RentalItem("C02", "Futsal Court Package (1hr)", "Facility", 80.00));
-
-        // Accessories (2)
-        catalogue.add(new RentalItem("A01", "Towel Set", "Accessory", 3.00));
-
-        catalogue.add(new RentalItem("A02", "Locker Service", "Accessory", 4.00));
+        // Accessories / add-on services (2)
+        catalogue.add(new AccessoryItem("A01", "Towel Set", 3.00));
+        catalogue.add(new AccessoryItem("A02", "Locker Service", 4.00));
     }
 
     public void run() {
@@ -117,15 +133,14 @@ public class ActiveHubSystem {
     }
 
     private void printMainMenu() {
-        ConsoleUI.section("ACTIVEHUB SYSTEM");
-        ConsoleUI.blank();
-        ConsoleUI.menuItem(1, "Facility Booking" );
-        ConsoleUI.menuItem(2, "View Rental Catalogue");
-        ConsoleUI.menuItem(3, "Create Rental Transaction");
-        ConsoleUI.menuItem(4, "Apply Promotion");
-        ConsoleUI.menuItem(5, "Make Payment");
-        ConsoleUI.menuItem(6, "Daily Report");
-        ConsoleUI.menuItem(7, "Exit");
+        ConsoleUI.menu("ACTIVEHUB SYSTEM",
+                "Facility Booking",
+                "View Rental Catalogue",
+                "Create Rental Transaction",
+                "Apply Promotion",
+                "Make Payment",
+                "Daily Report",
+                "Exit");
     }
 
     // -------------------- Module 1 --------------------
@@ -133,13 +148,11 @@ public class ActiveHubSystem {
     private void facilityBookingMenu() {
         int choice;
         do {
-            ConsoleUI.section("FACILITY BOOKING");
-            ConsoleUI.blank();
-            ConsoleUI.menuItem(1, "Create Booking");
-            ConsoleUI.menuItem(2, "View All Bookings");
-            ConsoleUI.menuItem(3, "Cancel Booking");
-            ConsoleUI.menuItem(4, "Back to Main Menu");
-            ConsoleUI.blank();
+            ConsoleUI.menu("FACILITY BOOKING",
+                    "Create Booking",
+                    "View All Bookings",
+                    "Cancel Booking",
+                    "Back to Main Menu");
             choice = readInt("Select option [1-4]: ");
             switch (choice) {
                 case 1 -> createBooking();
@@ -154,17 +167,20 @@ public class ActiveHubSystem {
     private void createBooking() {
         ConsoleUI.section("Create Booking");
         String name = readNonEmpty("Customer name: ");
-        String contact = readNonEmpty("Contact number: ");
+        String contact = readContactNumber();
         LocalDate date = readDate("Booking date (yyyy-MM-dd): ");
         LocalTime time = readTime("Booking time (HH:mm): ");
         int participants = readPositiveInt("Number of participants: ");
 
         ConsoleUI.blank();
-        ConsoleUI.info("Available facilities");
-        ConsoleUI.tableHeader("%-8s %-28s %-15s", "ID", "Name", "Type");
+        List<String[]> facilityRows = new ArrayList<>();
         for (Facility f : facilities) {
-            f.displayFacility();
+            facilityRows.add(f.toTableRow());
         }
+        ConsoleUI.boxedTable("Available facilities",
+                new String[]{"ID", "Name", "Type"},
+                new boolean[]{false, false, false},
+                facilityRows);
 
         Facility facility = null;
         while (facility == null) {
@@ -213,17 +229,19 @@ public class ActiveHubSystem {
     }
 
     private void viewBookings() {
-        ConsoleUI.section("All Bookings");
         if (bookings.isEmpty()) {
             ConsoleUI.warn("No bookings found.");
             return;
         }
-        ConsoleUI.tableHeader("%-8s %-16s %-8s %-12s %-6s %-4s %-10s",
-                "ID", "Customer", "Court", "Date", "Time", "Pax", "Status");
+        List<String[]> rows = new ArrayList<>();
         for (Booking b : bookings) {
-            b.displayBooking();
+            rows.add(b.toTableRow());
         }
-        ConsoleUI.tip("Total: " + bookings.size());
+        ConsoleUI.boxedTable("All Bookings",
+                new String[]{"ID", "Customer", "Court", "Date", "Time", "Pax", "Status"},
+                new boolean[]{false, false, false, false, false, true, false},
+                rows,
+                "Total: " + bookings.size());
     }
 
     private void cancelBooking() {
@@ -249,23 +267,24 @@ public class ActiveHubSystem {
     // -------------------- Module 2 --------------------
 
     private void viewCatalogue() {
-        ConsoleUI.section("RENTAL CATALOGUE");
-        ConsoleUI.tableHeader("%-8s %-30s %-12s %8s", "Code", "Item Name", "Category", "Price");
+        List<String[]> rows = new ArrayList<>();
         for (RentalItem item : catalogue) {
-            item.displayItem();
+            rows.add(item.toTableRow());
         }
-        ConsoleUI.tip("Equipment · Facility · Accessory  |  8 items");
+        ConsoleUI.boxedTable("RENTAL CATALOGUE",
+                new String[]{"Code", "Item Name", "Category", "Price"},
+                new boolean[]{false, false, false, true},
+                rows,
+                "Equipment · Facility · Accessory  |  8 items");
     }
 
     // -------------------- Module 3 --------------------
 
     private void createOrUpdateTransaction() {
-        ConsoleUI.section("RENTAL TRANSACTION");
-        ConsoleUI.blank();
-        ConsoleUI.menuItem(1, "Create New Transaction");
-        ConsoleUI.menuItem(2, "Update Existing Transaction", "add items");
-        ConsoleUI.menuItem(3, "View All Transactions");
-        ConsoleUI.blank();
+        ConsoleUI.menu("RENTAL TRANSACTION",
+                "Create New Transaction",
+                "Update Existing Transaction  — add items",
+                "View All Transactions");
         int choice = readInt("Select option [1-3]: ");
         switch (choice) {
             case 1 -> createTransaction();
@@ -278,7 +297,7 @@ public class ActiveHubSystem {
     private void createTransaction() {
         ConsoleUI.section("New Transaction");
         String name = readNonEmpty("Customer name: ");
-        String contact = readNonEmpty("Contact number: ");
+        String contact = readContactNumber();
         Customer customer = new Customer(name, contact);
 
         Booking linkedBooking = null;
@@ -306,9 +325,15 @@ public class ActiveHubSystem {
         }
 
         transactions.add(tx);
+        promotionEngine.applyBestPromotion(tx);
+        fileManager.saveTransactions(transactions);
         tx.displayBill();
         ConsoleUI.success("Transaction " + txId + " created.");
-        ConsoleUI.tip("Next: use menu [4] to apply promotion.");
+        if (tx.getSelectedPromotion() != null) {
+            ConsoleUI.tip("Best promotion applied: " + tx.getSelectedPromotion().getCode()
+                    + " — " + tx.getSelectedPromotion().getName());
+        }
+        ConsoleUI.tip("Menu [4] re-evaluates promotions if the bill changes.");
     }
 
     private void updateTransaction() {
@@ -317,10 +342,13 @@ public class ActiveHubSystem {
             return;
         }
         addItemsInteractively(tx);
-        tx.clearPromotion();
+        promotionEngine.applyBestPromotion(tx);
+        fileManager.saveTransactions(transactions);
         tx.displayBill();
         ConsoleUI.success("Transaction updated.");
-        ConsoleUI.tip("Re-apply promotion from menu [4] if needed.");
+        if (tx.getSelectedPromotion() != null) {
+            ConsoleUI.tip("Best promotion re-applied: " + tx.getSelectedPromotion().getCode());
+        }
     }
 
     private void addItemsInteractively(Transaction tx) {
@@ -346,24 +374,27 @@ public class ActiveHubSystem {
     }
 
     private void viewTransactions() {
-        ConsoleUI.section("All Transactions");
         if (transactions.isEmpty()) {
             ConsoleUI.warn("No transactions yet.");
             return;
         }
-        ConsoleUI.tableHeader("%-8s %-18s %-8s %12s %-10s",
-                "ID", "Customer", "Items", "Final", "Status");
+        List<String[]> rows = new ArrayList<>();
         for (Transaction t : transactions) {
             String status = t.isCompleted()
                     ? ConsoleUI.green("PAID")
                     : ConsoleUI.yellow("PENDING");
-            ConsoleUI.tableRow("%-8s %-18s %-8d %12s %-10s",
+            rows.add(new String[] {
                     t.getTransactionId(),
-                    truncate(t.getCustomer().getName(), 18),
-                    t.getItems().size(),
+                    t.getCustomer().getName(),
+                    String.valueOf(t.getItems().size()),
                     ConsoleUI.money(t.calculateFinalAmount()),
-                    status);
+                    status
+            });
         }
+        ConsoleUI.boxedTable("All Transactions",
+                new String[]{"ID", "Customer", "Items", "Final", "Status"},
+                new boolean[]{false, false, true, true, false},
+                rows);
     }
 
     // -------------------- Module 4 --------------------
@@ -376,6 +407,7 @@ public class ActiveHubSystem {
             return;
         }
         promotionEngine.applyBestPromotion(tx);
+        fileManager.saveTransactions(transactions);
         tx.displayBill();
         if (tx.getSelectedPromotion() != null) {
             ConsoleUI.success("Applied " + tx.getSelectedPromotion().getCode()
@@ -400,19 +432,17 @@ public class ActiveHubSystem {
         }
 
         tx.displayBill();
-        ConsoleUI.blank();
-        ConsoleUI.info("Select payment method");
-        ConsoleUI.menuItem(1, "Cash");
-        ConsoleUI.menuItem(2, "Credit / Debit Card");
-        ConsoleUI.menuItem(3, "E-Wallet");
-        ConsoleUI.blank();
+        ConsoleUI.menu("SELECT PAYMENT METHOD",
+                "Cash",
+                "Credit / Debit Card",
+                "E-Wallet");
         int method = readInt("Choice [1-3]: ");
 
         Payment payment;
         switch (method) {
             case 1 -> payment = new CashPayment();
             case 2 -> {
-                String digits = readNonEmpty("Last 4 digits of card: ");
+                String digits = readCardLastFour();
                 payment = new CardPayment(digits);
             }
             case 3 -> {
@@ -448,14 +478,18 @@ public class ActiveHubSystem {
             return null;
         }
         ConsoleUI.blank();
-        ConsoleUI.info("Pending transactions");
-        ConsoleUI.tableHeader("%-8s %-20s %12s", "ID", "Customer", "Subtotal");
+        List<String[]> rows = new ArrayList<>();
         for (Transaction t : pending) {
-            ConsoleUI.tableRow("%-8s %-20s %12s",
+            rows.add(new String[] {
                     t.getTransactionId(),
-                    truncate(t.getCustomer().getName(), 20),
-                    ConsoleUI.money(t.calculateSubtotal()));
+                    t.getCustomer().getName(),
+                    ConsoleUI.money(t.calculateSubtotal())
+            });
         }
+        ConsoleUI.boxedTable("Pending transactions",
+                new String[]{"ID", "Customer", "Subtotal"},
+                new boolean[]{false, false, true},
+                rows);
         String id = readNonEmpty("Enter transaction ID: ");
         Transaction tx = findTransaction(id);
         if (tx == null) {
@@ -512,11 +546,27 @@ public class ActiveHubSystem {
         fileManager.saveTransactions(transactions);
     }
 
-    private String truncate(String text, int max) {
-        if (text.length() <= max) {
-            return text;
+    private String readCardLastFour() {
+        while (true) {
+            String raw = readNonEmpty("Last 4 digits of card: ");
+            String digits = raw.trim().replaceAll("\\s+", "");
+            if (CardPayment.isValidLastFour(digits)) {
+                return digits;
+            }
+            ConsoleUI.error("Card digits must be numbers only — exactly 4 digits. Letters are not allowed.");
+            ConsoleUI.tip("Example: 1234");
         }
-        return text.substring(0, max - 1) + "…";
+    }
+
+    private String readContactNumber() {
+        while (true) {
+            String raw = readNonEmpty("Contact number: ");
+            if (Customer.isValidContact(raw)) {
+                return Customer.normaliseContact(raw);
+            }
+            ConsoleUI.error("Invalid contact. Use 10–11 digits starting with 0.");
+            ConsoleUI.tip("Examples: 0123456789  |  012-345 6789  |  +60123456789");
+        }
     }
 
     private String readNonEmpty(String prompt) {

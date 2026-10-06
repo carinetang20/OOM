@@ -54,11 +54,13 @@ java -cp out/classes Main
 | A01 | Towel Set | Accessory | 3.00 |
 | A02 | Locker Service | Accessory | 4.00 |
 
-## Submission checklist
+## Submission checklist (aim: Excellent band)
 
-- [ ] Report PDF/Word (see `docs/ActiveHub_Group_Report.md`)
-- [ ] UML class diagram exported from `docs/ActiveHub_UML_Class_Diagram.puml` (PlantUML / draw.io / Lucidchart)
-- [ ] All `.java` source files under `src/`
-- [ ] Text data files under `data/`
-- [ ] Academic integrity + contribution form signed
-- [ ] Part D reflections filled by each member
+- [ ] Word/PDF: Times New Roman 12, 1.5 spacing (`docs/ActiveHub_Group_Report.md` is the source)
+- [ ] Insert `docs/ActiveHub_UML_Class_Diagram.png` and `docs/ActiveHub_UML_Polymorphism.png`
+- [ ] Insert IntelliJ screenshots for menus 1–6 plus daily report
+- [ ] All `.java` files under `src/`
+- [ ] Text files under `data/`
+- [ ] Cover page names/IDs, contribution form **signed** (unsigned = −3)
+- [ ] Part D: each member puts their own name on their reflection
+- [ ] Academic integrity table signed

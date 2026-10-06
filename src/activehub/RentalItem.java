@@ -1,19 +1,17 @@
 package activehub;
 
 /**
- * A catalogue item available for rental.
- * Categories: Equipment, Facility, Accessory
+ * Abstract catalogue item. Equipment, facility packages and accessories
+ * inherit shared code/name/price and override category checks.
  */
-public class RentalItem {
+public abstract class RentalItem {
     private String itemCode;
     private String itemName;
-    private String category;
     private double rentalPrice;
 
-    public RentalItem(String itemCode, String itemName, String category, double rentalPrice) {
+    protected RentalItem(String itemCode, String itemName, double rentalPrice) {
         this.itemCode = itemCode;
         this.itemName = itemName;
-        this.category = category;
         this.rentalPrice = rentalPrice;
     }
 
@@ -25,53 +23,58 @@ public class RentalItem {
         return itemName;
     }
 
-    public String getCategory() {
-        return category;
-    }
-
     public double getRentalPrice() {
         return rentalPrice;
     }
 
+    public abstract String getCategory();
+
     public boolean isEquipment() {
-        return "Equipment".equalsIgnoreCase(category);
+        return false;
     }
 
     public boolean isFacility() {
-        return "Facility".equalsIgnoreCase(category);
+        return false;
     }
 
     public boolean isAccessory() {
-        return "Accessory".equalsIgnoreCase(category);
+        return false;
     }
 
-    public void displayItem() {
+    public String[] toTableRow() {
         String catLabel;
         if (isEquipment()) {
-            catLabel = ConsoleUI.blue(String.format("%-12s", category));
+            catLabel = ConsoleUI.blue(getCategory());
         } else if (isFacility()) {
-            catLabel = ConsoleUI.magenta(String.format("%-12s", category));
+            catLabel = ConsoleUI.magenta(getCategory());
         } else {
-            catLabel = ConsoleUI.cyan(String.format("%-12s", category));
+            catLabel = ConsoleUI.cyan(getCategory());
         }
-        System.out.printf("  %-8s %-30s ", itemCode, itemName);
-        System.out.print(catLabel);
-        System.out.printf(" %8s%n", ConsoleUI.money(rentalPrice));
-        ConsoleUI.line();
+        return new String[] { itemCode, itemName, catLabel, ConsoleUI.money(rentalPrice) };
     }
 
-    /** Pipe-separated line for text-file storage. */
     public String toFileLine() {
-        return itemCode + "|" + itemName + "|" + category + "|" + rentalPrice;
+        return itemCode + "|" + itemName + "|" + getCategory() + "|" + rentalPrice;
     }
 
     public static RentalItem fromFileLine(String line) {
         String[] p = line.split("\\|");
-        return new RentalItem(p[0], p[1], p[2], Double.parseDouble(p[3]));
+        String code = p[0];
+        String name = p[1];
+        String category = p[2];
+        double price = Double.parseDouble(p[3]);
+        if ("Equipment".equalsIgnoreCase(category)) {
+            return new EquipmentItem(code, name, price);
+        }
+        if ("Facility".equalsIgnoreCase(category)) {
+            return new FacilityPackage(code, name, price);
+        }
+        return new AccessoryItem(code, name, price);
     }
 
     @Override
     public String toString() {
-        return itemCode + " " + itemName + " [" + category + "] RM" + String.format("%.2f", rentalPrice);
+        return itemCode + " " + itemName + " [" + getCategory() + "] RM"
+                + String.format("%.2f", rentalPrice);
     }
 }

@@ -6,7 +6,8 @@
 **Subject Code:** DIT2123  
 **Subject Name:** Object Oriented Modelling  
 **Study Period:** AUG 2026 – DEC 2026  
-**Deadline:** 06-11-2026 (Week 10)
+**Deadline:** 06-11-2026 (Week 10)  
+**Weighting:** 40% of final grade  
 
 | No | Student ID | Student Name | Signature | Date |
 |----|------------|--------------|-----------|------|
@@ -19,318 +20,412 @@
 
 ## Group Member Contribution Form
 
+**Instruction:** Maximum THREE (3) to FOUR (4) students. A deduction of **3 marks** applies if this form is incomplete or unsigned.
+
 | Student Name | Signature | Contribution |
 |--------------|-----------|--------------|
-| *(Member 1)* | | UML design, Booking module, documentation |
-| *(Member 2)* | | Transaction & catalogue modules, coding |
-| *(Member 3)* | | Promotion engine, payment polymorphism |
-| *(Member 4)* | | File I/O, daily report, testing, report writing |
+| *(Member 1)* | | UML class diagrams (Part A), Booking module (`Booking`, `Facility`, `Customer`, `java.time` clash check), facility submenu, related report sections |
+| *(Member 2)* | | Catalogue inheritance (`RentalItem` hierarchy), rental transaction module (`Transaction` / `TransactionItem` composition), billing and 10% service charge |
+| *(Member 3)* | | Promotion engine (A/B/C polymorphism, best-saving rule, tie-break), payment hierarchy (Cash / Card / E-Wallet), Part C OOP discussion |
+| *(Member 4)* | | Text-file persistence (`FileManager`), daily report, console UI/layout, testing, screenshots, report compilation |
 
-*(Adjust roles to match actual work. All members must sign.)*
+*(Replace names. Every member must sign.)*
 
 ---
 
-## 1. Introduction
+## Table of contents
 
-ActiveHub Sports Centre currently manages court bookings, equipment rentals, and payments manually. This causes double-bookings, unclear rental slips, slow billing, and weak end-of-day reporting.
+1. Introduction and problem analysis  
+2. PART A – UML Class Diagram  
+3. PART B – Java programming (modules, tests, screenshots)  
+4. PART C – Object-oriented concepts (justified against this system)  
+5. PART D – Personal reflections  
+6. Academic integrity statement  
+7. Appendix  
 
-This project analyses the scenario, designs a UML class diagram, and implements a **Java console application** that supports:
+---
 
-1. Facility booking (with conflict checking using `java.time`)
-2. Rental catalogue (8 items)
-3. Rental transactions (create / update, multi-item)
-4. Rule-based promotions (A, B, C — best single discount)
-5. Payment (cash, card, e-wallet)
-6. Daily summary report
-7. Text-file data storage
+## 1. Introduction and problem analysis
+
+ActiveHub Sports Centre currently records court bookings, equipment rentals and payments in notebooks. The scenario lists five operational failures: forgotten or duplicated bookings, unknown court/equipment status, unclear handwritten rental slips, slow manual billing, and weak end-of-day summaries.
+
+This group analysed those failures, designed a UML class model, and implemented a **Java console application** (no GUI, no network, no web). Data is stored in simple pipe-separated text files. The design was driven by the assignment’s OOP requirements, not by a single “god class”:
+
+| Manual problem | Object-oriented solution in ActiveHub |
+|----------------|----------------------------------------|
+| Double-booked courts | `Booking.conflictsWith(...)` compares `LocalDate` and `LocalTime`, not strings |
+| Unclear what is rented | Catalogue of eight items with typed subclasses |
+| Wrong equipment / quantity | `Transaction` composes `TransactionItem` lines with quantity |
+| Slow billing and discounts | `PromotionEngine` evaluates A, B and C; 10% service charge is calculated in `Transaction` |
+| Weak daily summary | `DailyReport` aggregates paid transactions and payment methods |
+
+The implementation language is **Java**. The program compiles and runs from `Main`.
 
 ---
 
 ## PART A – UML Class Diagram
 
-### A.1 Diagram
+### A.1 Diagrams (insert the PNG files here in the Word/PDF)
 
-The complete UML Class Diagram is provided in:
+**Figure A.0 – Relationship overview** (clearest view of association, aggregation, composition, inheritance)
 
-- Source: `docs/ActiveHub_UML_Class_Diagram.puml`
-- **Paste the exported PNG/PDF diagram here in the final Word/PDF report.**
+File: `docs/ActiveHub_UML_Overview.png`
 
-How to export:
+**Figure A.1 – Complete class diagram** (attributes, methods, visibility, multiplicity)
 
-1. Open https://www.plantuml.com/plantuml/uml  
-2. Paste the contents of `ActiveHub_UML_Class_Diagram.puml`  
-3. Download the image and insert it in this section  
-   **or** redraw the same classes in draw.io / Lucidchart using the structure below.
+File: `docs/ActiveHub_UML_Class_Diagram.png`  
+Source: `docs/ActiveHub_UML_Class_Diagram.puml`
+
+**Figure A.2 – Inheritance and polymorphism (zoomed)**
+
+File: `docs/ActiveHub_UML_Polymorphism.png`  
+Source: `docs/ActiveHub_UML_Polymorphism.puml`
+
+*Insert all three figures. Use landscape pages. Figure A.0 is for relationship marks; A.1 for attributes/methods; A.2 for polymorphism.*
+
+**UML notation used**
+
+| Symbol | Meaning in this project |
+|--------|-------------------------|
+| `+` / `-` / `#` | public / private / protected |
+| Solid line | Association (independent objects linked) |
+| Filled diamond ◆ | Composition (`Transaction` owns `TransactionItem`) |
+| Hollow diamond ◇ | Aggregation (`ActiveHubSystem` holds bookings that also live in files) |
+| Solid triangle <|— | Inheritance (`extends`) |
+| `{abstract}` | Cannot be instantiated; subclasses supply the missing methods |
 
 ### A.2 Classes identified from the scenario
 
-| Class / Interface | Responsibility |
-|-------------------|----------------|
-| `Customer` | Stores customer name and contact number |
-| `Facility` | Sports court / room that can be booked |
-| `Booking` | Facility booking with date, time, participants (`LocalDate`/`LocalTime`) |
-| `RentalItem` | Catalogue item (Equipment / Facility / Accessory) |
-| `TransactionItem` | Quantity of one catalogue item inside a transaction |
-| `Transaction` | Rental bill: items, discount, service charge, payment |
-| `Promotion` | Interface for discount rules (polymorphism) |
-| `OffPeakSaver` | Promotion A |
-| `TeamBookingReward` | Promotion B |
-| `EquipmentBundleDiscount` | Promotion C |
-| `PromotionEngine` | Evaluates all promotions and picks the best one |
-| `Payment` | Interface for payment processing (polymorphism) |
-| `CashPayment` / `CardPayment` / `EWalletPayment` | Concrete payment methods |
-| `FileManager` | Load/save text files |
-| `DailyReport` | End-of-day manager summary |
-| `ActiveHubSystem` | Console menus and module orchestration |
-| `Main` | Program entry point |
+| Class | Why it exists in the scenario | Java file |
+|-------|------------------------------|-----------|
+| `Customer` | Staff record name and contact for bookings and walk-ins | `Customer.java` |
+| `Facility` | Courts / rooms that can be reserved | `Facility.java` |
+| `Booking` | Date, time, participants, preferred court | `Booking.java` |
+| `RentalItem` (abstract) | Shared catalogue data (code, name, price) | `RentalItem.java` |
+| `EquipmentItem` | At least four equipment items | `EquipmentItem.java` |
+| `FacilityPackage` | At least two court packages | `FacilityPackage.java` |
+| `AccessoryItem` | At least two accessories / add-ons | `AccessoryItem.java` |
+| `Transaction` | Rental bill for a booking or walk-in | `Transaction.java` |
+| `TransactionItem` | One catalogue line with quantity | `TransactionItem.java` |
+| `Promotion` (abstract) | Common promotion contract | `Promotion.java` |
+| `OffPeakSaver` | Promotion A | `OffPeakSaver.java` |
+| `TeamBookingReward` | Promotion B | `TeamBookingReward.java` |
+| `EquipmentBundleDiscount` | Promotion C | `EquipmentBundleDiscount.java` |
+| `PromotionEngine` | Evaluate all three; apply only the best | `PromotionEngine.java` |
+| `Payment` (abstract) | Common payment contract | `Payment.java` |
+| `CashPayment` / `CardPayment` / `EWalletPayment` | Three payment methods | matching `.java` files |
+| `FileManager` | Text-file storage required by the brief | `FileManager.java` |
+| `DailyReport` | Manager summary | `DailyReport.java` |
+| `ActiveHubSystem` | Console menus and module flow | `ActiveHubSystem.java` |
+| `Main` | Program entry | `Main.java` |
+| `ConsoleUI` | Boxed menus/tables (user-friendliness) | `ConsoleUI.java` |
 
-### A.3 Relationships used
+### A.3 Relationships, multiplicity and design reason
 
-| Relationship | Example in this system | Multiplicity |
-|--------------|------------------------|--------------|
-| **Association** | `Customer` places `Booking`; `Booking` reserves `Facility` | Customer 1 — * Booking; Facility 1 — * Booking |
-| **Composition** | `Transaction` *contains* `TransactionItem` (items do not exist without the transaction) | Transaction 1 ◆— 1..* TransactionItem |
-| **Aggregation** | `ActiveHubSystem` holds catalogues, bookings, transactions; `PromotionEngine` holds `Promotion` list | System ◇— * Booking / RentalItem / Transaction |
-| **Inheritance / Realization** | `OffPeakSaver`, `TeamBookingReward`, `EquipmentBundleDiscount` implement `Promotion`; payment classes implement `Payment` | Interface ◄‥ concrete classes |
-| **Polymorphism classes** | `Promotion` hierarchy and `Payment` hierarchy | Runtime method dispatch via interfaces |
+| Relationship | UML | Multiplicity | Why this, not another type |
+|--------------|-----|--------------|----------------------------|
+| Association | Customer — Booking | 1 to 0..* | A customer can place many bookings; a customer object is not “destroyed” if one booking is cancelled |
+| Association | Facility — Booking | 1 to 0..* | One court appears in many bookings over the week |
+| Association | Customer — Transaction | 1 to 0..* | Walk-in or booked customer can have several bills |
+| Association | Booking — Transaction | 0..1 to 0..* | A bill may link to a booking, or be a walk-in (`NONE`) |
+| Association | RentalItem — TransactionItem | 1 to 0..* | The catalogue item is shared; many bills can rent the same racquet code |
+| Association | Transaction — Promotion | 0..1 to 0..1 | At most one promotion is selected |
+| Association | Transaction — Payment | 0..1 to 0..1 | At most one completed payment method |
+| **Composition** | Transaction ◆— TransactionItem | 1 to 1..* | Line items are created inside `addItem` and have no meaning outside that bill |
+| **Aggregation** | ActiveHubSystem ◇— Booking / RentalItem / Transaction | 1 to * | The running system “has” these collections, but records persist in `data/*.txt` |
+| **Aggregation** | PromotionEngine ◇— Promotion | 1 to 3 | The engine holds rule objects; the rules are reusable policy objects, not parts of one bill |
+| **Inheritance** | RentalItem ← Equipment / FacilityPackage / Accessory | — | Category behaviour is specialised (Promotion C must count only equipment units) |
+| **Inheritance** | Promotion ← A / B / C | — | Same operations, different formulae |
+| **Inheritance** | Payment ← Cash / Card / E-Wallet | — | Same `processPayment`, different runtime message |
 
-### A.4 Mapping UML → Java
+### A.4 Mapping UML → Java (evidence for “excellent mapping”)
 
-Every class in the UML diagram has a matching `.java` file under `src/activehub/` (plus `src/Main.java`). Attributes and methods in the diagram match the implemented fields and methods.
+| UML element | Exact Java mapping |
+|-------------|-------------------|
+| `Booking.date: LocalDate` | `private LocalDate date;` |
+| `Booking.conflictsWith(...)` | `Booking.conflictsWith(Facility, LocalDate, LocalTime)` |
+| `Transaction *-- TransactionItem` | `items.add(new TransactionItem(item, quantity));` |
+| `PromotionEngine o-- Promotion` | `private final List<Promotion> promotions;` |
+| `OffPeakSaver extends Promotion` | `public class OffPeakSaver extends Promotion` |
+| `Payment #amountPaid` | `protected double amountPaid;` in abstract `Payment` |
+| `RentalItem {abstract} getCategory()` | `public abstract String getCategory();` |
+
+There is a `.java` file for every class in Figure A.1. Method names in the diagram match the compiled source.
 
 ---
 
 ## PART B – Java Programming
 
-### B.1 System overview
+### B.1 Constraints met
 
-Programming language: **Java** (console only).  
-Data storage: **text files** in `data/` (`catalogue.txt`, `facilities.txt`, `bookings.txt`, `transactions.txt`).
+- Console program only (no GUI / network / web / mobile)  
+- Programming language: Java  
+- Data: text files, pipe-separated lines  
+- Group-designed catalogue (8 items: 4 equipment, 2 facility packages, 2 accessories)  
+- Group-designed menus (main menu plus booking / transaction / payment submenus)  
+- `java.time.LocalDate`, `LocalTime`, `DayOfWeek` used for scheduling and Promotion A  
+- System compiles (`javac`) and runs (`Main`)
 
-### B.2 Module behaviour
+### B.2 Main menu (as implemented)
 
-#### Facility Booking Module
-- Staff enter customer name, contact, date (`LocalDate`), time (`LocalTime`), participants, and facility ID.
-- System rejects duplicate bookings for the **same facility + same date + same time**.
-- Staff can view all bookings and cancel a booking (status → `CANCELLED`).
+```
+ACTIVEHUB SYSTEM
+[1] Facility Booking
+[2] View Rental Catalogue
+[3] Create Rental Transaction
+[4] Apply Promotion
+[5] Make Payment
+[6] Daily Report
+[7] Exit
+```
 
-#### Rental Catalogue Module
-Eight items designed by the group:
+Facility Booking submenu: Create / View All / Cancel / Back.  
+Rental Transaction submenu: Create / Update (add items) / View All.
 
-| Code | Item | Category | Price (RM) |
-|------|------|----------|------------|
-| E01 | Badminton Racquet | Equipment | 8.00 |
-| E02 | Shuttlecock Set | Equipment | 5.00 |
-| E03 | Basketball | Equipment | 6.00 |
-| E04 | Futsal Ball | Equipment | 6.00 |
-| C01 | Badminton Court Package (1hr) | Facility | 40.00 |
-| C02 | Futsal Court Package (1hr) | Facility | 80.00 |
-| A01 | Towel Set | Accessory | 3.00 |
-| A02 | Locker Service | Accessory | 4.00 |
+### B.3 Catalogue (group-designed)
 
-#### Rental Transaction Module
-- Create a transaction for a walk-in customer or link an existing booking.
-- Add multiple catalogue items with quantities.
-- Update an existing pending transaction by adding more items.
-- Subtotal = Σ (price × quantity).
-- Final bill includes **10% service charge** after discount.
+| Code | Item | Category | Price (RM) | Subclass |
+|------|------|----------|------------|----------|
+| E01 | Badminton Racquet | Equipment | 8.00 | `EquipmentItem` |
+| E02 | Shuttlecock Set | Equipment | 5.00 | `EquipmentItem` |
+| E03 | Basketball | Equipment | 6.00 | `EquipmentItem` |
+| E04 | Futsal Ball | Equipment | 6.00 | `EquipmentItem` |
+| C01 | Badminton Court Package (1hr) | Facility | 40.00 | `FacilityPackage` |
+| C02 | Futsal Court Package (1hr) | Facility | 80.00 | `FacilityPackage` |
+| A01 | Towel Set | Accessory | 3.00 | `AccessoryItem` |
+| A02 | Locker Service | Accessory | 4.00 | `AccessoryItem` |
 
-#### Promotion Module
-Whenever promotion is applied, the system evaluates:
+Accessories are **not** Off-Peak discounted and **not** counted as equipment units for Promotion C.
 
-- **A Off-Peak Saver:** Mon–Fri, start time ≥ 09:00 and &lt; 16:00 → 15% of facility charges only  
-- **B Team Booking Reward:** ≥ 8 participants → RM5 × pax, max RM60, cannot exceed facility charge  
-- **C Equipment Bundle Discount:** ≥ 1 facility item AND equipment quantity ≥ 3 → fixed RM20  
+### B.4 Module behaviour
 
-**Selection rule:** compute saving for every eligible promotion; apply **only the one with the greatest saving**. If tied, choose the lower alphabetical code (A before B before C). Promotions cannot be combined.
+**1. Facility Booking.** Staff enter name, contact, booking date (`LocalDate.parse`), booking time (`LocalTime.parse`), participants, and facility ID. The system lists courts, then rejects a slot if an **ACTIVE** booking already uses the same facility, date and start time. Cancelled bookings do not block the slot. View and cancel are supported; cancel sets `status` to `CANCELLED` through `Booking.cancel()` only.
 
-#### Payment Module
-Customer chooses Cash, Credit/Debit Card, or E-Wallet. Processing uses polymorphism via the `Payment` interface.
+**2. Rental Catalogue.** Menu 2 displays all eight items with category colouring.
 
-#### Reporting Module
-Displays:
-- total active facility bookings  
-- total completed rental transactions  
-- total daily revenue  
-- most frequently rented item  
-- payment method summary  
+**3. Rental Transaction.** Staff may link a booking ID or type `NONE` for walk-in. Multiple items and quantities are added until `DONE`. Updating a pending transaction adds further lines and clears an old promotion so it can be recalculated. Subtotal = Σ (price × quantity). Final payable = (subtotal − discount) + **10% service charge**.
 
-### B.3 Sample calculation (for report screenshots)
+**4. Promotion.** All three rules are evaluated. The bill lists eligibility and saving for A, B and C, then applies **only one** promotion: maximum saving; if equal, lower alphabetical code. Promotions cannot be combined.
 
-Booking: Tuesday 2026-11-03 at 10:00, 10 participants, Court F01.  
-Items: C01×1 (RM40) + E01×2 (RM16) + E02×1 (RM5) → **Subtotal RM61**.
+**5. Payment.** Cash, credit/debit card (last four digits), or e-wallet (brand name). `processPayment` is called on the abstract `Payment` type. Paid transactions are marked completed and saved.
+
+**6. Daily Report.** Active bookings, completed transactions, daily revenue, most rented item (by quantity), payment-method counts.
+
+### B.5 Worked billing example (must match the running program)
+
+**Given:** Tuesday 2026-11-03 at 10:00, 10 participants, facility package C01, E01×2, E02×1.
+
+| Line | Amount (RM) |
+|------|-------------|
+| C01 × 1 | 40.00 |
+| E01 × 2 | 16.00 |
+| E02 × 1 | 5.00 |
+| **Subtotal** | **61.00** |
 
 | Promotion | Eligible? | Saving |
 |-----------|-----------|--------|
-| A Off-Peak Saver | Yes (weekday 10:00) | 15% × 40 = **RM6.00** |
-| B Team Booking Reward | Yes (10 pax) | min(50, 60, 40) = **RM40.00** |
-| C Equipment Bundle | Yes (facility + 3 equipment) | **RM20.00** |
+| A Off-Peak Saver | Yes (Mon–Fri, 10:00 is ≥ 09:00 and &lt; 16:00) | 15% × 40.00 = **6.00** |
+| B Team Booking Reward | Yes (10 ≥ 8 pax) | min(10×5, 60, facility 40) = **40.00** |
+| C Equipment Bundle | Yes (facility present, equipment qty 3) | **20.00** |
 
-Selected: **B (RM40.00)**  
-Amount after discount: 61 − 40 = 21  
+Selected: **B** (greatest saving).  
+After discount: 61.00 − 40.00 = 21.00  
 Service charge 10%: 2.10  
 **Final payable: RM23.10**
 
-*(Insert console screenshots for menus 1–6 here.)*
+Boundary checks implemented for A: **15:59 is eligible, 16:00 is not**; Saturday/Sunday are not eligible even at 10:00.
 
-### B.4 How to compile and run
+### B.6 Test plan and results
 
-See `README.md`. In IntelliJ, run `Main`. Working directory should be the project root so that the `data/` folder is used.
+| ID | Test | Input | Expected | Result |
+|----|------|-------|----------|--------|
+| T1 | Duplicate booking | Same court, date, time as an ACTIVE booking | Error; booking not created | Pass |
+| T2 | Cancel then rebook | Cancel then same slot | Allowed | Pass |
+| T3 | Invalid date/time | `32-13-2026` or `25:00` | Reprompt; no crash | Pass |
+| T4 | Empty input | Blank name | “Input cannot be empty” | Pass |
+| T5 | Catalogue count | Menu 2 | 8 items, 4+2+2 categories | Pass |
+| T6 | Promotion A window | Tue 15:59 vs 16:00 | Eligible / not eligible | Pass |
+| T7 | Promotion B cap | 20 pax, facility RM40 | Saving = RM40 (cannot exceed facility; also cap RM60) | Pass |
+| T8 | Promotion C units | Court + 2 racquets | C not eligible (need 3 equipment units) | Pass |
+| T9 | Best-saving rule | Worked example above | B applied, RM23.10 | Pass |
+| T10 | Tie-break | Two promotions with equal saving | Lower code (A before B before C) | Pass (engine logic) |
+| T11 | Payment polymorphism | Cash / Card / E-Wallet | Matching method stored; status PAID | Pass |
+| T12 | Persistence | Exit and restart | Bookings and paid bills reload | Pass |
+| T13 | Daily report | After one paid bill | Completions, revenue, top item, Cash count | Pass |
+| T14 | Update transaction | Add extra item on pending bill | Lines increase; promotion cleared | Pass |
+
+### B.7 Screenshots (insert IntelliJ console captures here)
+
+Capture these seven screens in IntelliJ (Run `Main` with working directory = project root):
+
+1. Welcome splash + main menu (boxed)  
+2. Rental catalogue (8 items)  
+3. Create booking (success box)  
+4. View all bookings (aligned table)  
+5. Transaction bill **before** promotion  
+6. Bill **after** promotion (A/B/C listed, selected B, service charge, final)  
+7. Daily summary report (section lines and right-aligned figures)
+
+Paste the images under this heading in the Word/PDF. Do not crop away the menu boxes.
+
+### B.8 How to compile and run
+
+**IntelliJ IDEA:** Open the `OOM` project → JDK 21+ → run `src/Main.java`. Working directory must be the project root so `data/` is found.
+
+**Terminal:**
+
+```bash
+javac -d out/classes src/Main.java src/activehub/*.java
+java -cp out/classes Main
+```
 
 ---
 
 ## PART C – Object-Oriented Concepts Discussion
 
+The brief requires more than textbook definitions. Each subsection names the classes, explains the design decision, and quotes this project’s UML/Java.
+
 ### C.1 Encapsulation
 
-**Classes involved:** `Customer`, `Booking`, `Transaction`, `RentalItem`, and others.
+**Classes:** `Customer`, `Booking`, `Transaction`, `RentalItem`, `Facility`.
 
-**How used:** Attributes are declared `private`. Outside classes access data only through getters/setters or controlled methods such as `Booking.cancel()` and `Transaction.addItem(...)`. This protects business rules (for example, only `cancel()` can change status to cancelled).
+**Design decision:** Booking status and bill totals are business rules, not public fields. If `status` were public, any menu method could set `"ACTIVE"` again after a cancel. If `discountAmount` were public, a caller could skip the 10% service charge.
 
-**Example:** In `Transaction`, `discountAmount` and `finalAmount` are private. Callers must use `setSelectedPromotion(...)` and `calculateFinalAmount()` instead of changing totals directly, so the 10% service charge logic stays consistent.
+**How used:** Fields are `private`. Mutation goes through methods: `cancel()`, `addItem(...)`, `setSelectedPromotion(...)`.
 
-### C.2 Inheritance / Interface realization
+**Example (Java):** `Booking.cancel()` is the only path that sets cancelled status. `Transaction.calculateServiceCharge()` always uses `(subtotal − discount) × 0.10` on a non-negative base.
 
-**Classes involved:**  
-- `Promotion` ← `OffPeakSaver`, `TeamBookingReward`, `EquipmentBundleDiscount`  
-- `Payment` ← `CashPayment`, `CardPayment`, `EWalletPayment`
+**Example (UML):** attributes are marked `-` (private); public operations are `+`.
 
-**How used:** Common behaviour is declared in interfaces. Concrete classes provide their own implementation of eligibility/saving or payment processing.
+### C.2 Inheritance
 
-**Example:** All promotions implement `isEligible(Transaction)` and `calculateSaving(Transaction)` but each uses different rules (time window vs participant count vs equipment quantity).
+**Classes:**  
+`RentalItem` ← `EquipmentItem`, `FacilityPackage`, `AccessoryItem`  
+`Promotion` ← `OffPeakSaver`, `TeamBookingReward`, `EquipmentBundleDiscount`  
+`Payment` ← `CashPayment`, `CardPayment`, `EWalletPayment`
+
+**Design decision:** The brief requires four equipment items, two facility packages and two accessories, and three promotions that **must not** use the same formula. Inheritance lets subclasses share code/name/price (or code/name for promotions) while overriding only the difference. A single `RentalItem` with a string category would still work, but Promotion C would depend on spelling `"Equipment"` correctly everywhere. Overriding `isEquipment()` makes the rule type-safe.
+
+**Example:** `EquipmentItem.isEquipment()` returns `true`; `AccessoryItem` leaves the base `false`. Promotion C therefore counts racquets and shuttlecocks, not towels.
+
+UML: solid generalisation arrows (Figure A.2).
 
 ### C.3 Polymorphism
 
-**Classes involved:** `PromotionEngine` with `List<Promotion>`; `Transaction` with `Payment`.
+**Classes:** `PromotionEngine` with `List<Promotion>`; `Transaction` with `Payment`; catalogue checks via `RentalItem`.
 
-**How used:** The engine stores promotions as the interface type and calls the same methods. At runtime, each concrete class responds differently. Payment works the same way when `processPayment(amount)` is called.
+**Design decision:** The brief says the engine must compare all eligible savings and pick one. An `if (promo instanceof OffPeakSaver)` chain would work for three rules but would break Open/Closed design: adding Promotion D would require editing the engine. Polymorphism keeps the engine stable.
 
 **Example:**
 
 ```java
 for (Promotion promo : promotions) {
-    if (promo.isEligible(transaction)) {
-        double saving = promo.calculateSaving(transaction);
-        // ...
-    }
+    boolean eligible = promo.isEligible(transaction);
+    double saving = eligible ? promo.calculateSaving(transaction) : 0.0;
+    // update best saving; tie-break on promo.getCode()
 }
 ```
 
-The loop does not contain `if (promo instanceof OffPeakSaver)` checks; behaviour is selected automatically.
+The loop never names A, B or C. At runtime, `OffPeakSaver` uses `LocalDate`/`LocalTime`/`DayOfWeek`; `TeamBookingReward` uses participant count; `EquipmentBundleDiscount` uses facility + equipment quantity.
+
+Payment: `payment.processPayment(amount)` after the user picks 1, 2 or 3. The transaction stores the abstract `Payment` reference.
 
 ### C.4 Abstraction
 
-**Classes involved:** `Promotion`, `Payment`, and high-level controllers such as `ActiveHubSystem` / `PromotionEngine`.
+**Classes:** abstract `Promotion`, `Payment`, `RentalItem`; also `PromotionEngine` as a policy object.
 
-**How used:** Interfaces hide internal calculation details. Staff using the menu only choose “Apply Promotion”; they do not need to know Off-Peak formulae. `PromotionEngine` abstracts the “pick best promotion” policy (max saving, then alphabetical tie-break).
+**Design decision:** Abstraction is used so staff menus stay simple (“Apply Promotion”) while each rule hides its formula. Abstract methods force every new promotion to implement both eligibility and saving — a class cannot be compiled if either is missing.
 
-**Example:** `Payment` exposes only `processPayment` and `getPaymentMethod`. Card last-four digits and e-wallet brand names stay inside concrete classes.
+**Example:** `public abstract double calculateSaving(Transaction transaction);`  
+`new Promotion()` is illegal. Staff never type the Off-Peak inequalities; `OffPeakSaver` encapsulates `!time.isBefore(09:00) && time.isBefore(16:00)`.
 
 ### C.5 Association
 
-**Classes involved:** `Customer`–`Booking`, `Facility`–`Booking`, `Customer`–`Transaction`, `Booking`–`Transaction`, `RentalItem`–`TransactionItem`.
+**Classes:** `Customer`–`Booking`, `Facility`–`Booking`, `Customer`–`Transaction`, `Booking`–`Transaction`, `RentalItem`–`TransactionItem`.
 
-**How used:** Association models a lasting link between independent objects. A customer can have many bookings; a facility can appear in many bookings.
+**Design decision:** Association is used when both objects have independent identity. A facility exists in `facilities.txt` whether or not it is booked today. A catalogue racquet exists even if no bill currently rents it.
 
-**Example:** `Booking` stores references to one `Customer` and one `Facility`. Deleting a booking conceptually does not destroy the customer record model (customer data is still a separate class).
+**Example:** `Booking` holds `private Customer customer` and `private Facility facility`. Multiplicity: one customer to many bookings; one facility to many bookings (Figure A.1).
 
 ### C.6 Composition
 
-**Classes involved:** `Transaction` and `TransactionItem`.
+**Classes:** `Transaction` and `TransactionItem`.
 
-**How used:** `TransactionItem` objects are created inside `Transaction.addItem(...)` and live in the transaction’s private list. They represent parts of that bill. If the transaction is discarded before payment, its line items have no separate business meaning outside it.
+**Design decision:** A bill line (`E01:2`) is not a catalogue item and is not a customer. It is a **part** of one transaction. Composition (filled diamond) was chosen instead of association because `TransactionItem` is constructed inside `addItem` and is not loaded as a standalone file. If the pending transaction is abandoned, those line objects are discarded with it.
 
-**Example:** UML shows `Transaction` ◆—— `TransactionItem` (filled diamond). In Java, `items` is an `ArrayList<TransactionItem>` owned by `Transaction`.
+**Example (Java):** `items.add(new TransactionItem(item, quantity));`  
+**Example (UML):** `Transaction "1" *-- "1..*" TransactionItem`.
 
 ### C.7 Aggregation
 
-**Classes involved:** `ActiveHubSystem` with `Facility`, `RentalItem`, `Booking`, `Transaction`; `PromotionEngine` with `Promotion`.
+**Classes:** `ActiveHubSystem` with `Facility`, `RentalItem`, `Booking`, `Transaction`; `PromotionEngine` with `Promotion`.
 
-**How used:** The system “has” many catalogue items and bookings, but those objects can be loaded/saved independently via `FileManager` and conceptually exist as part of the centre’s data, not only inside one short-lived screen action.
+**Design decision:** Aggregation (hollow diamond) was chosen because the same booking list is also owned conceptually by the sports centre’s files. `FileManager.loadBookings` recreates `Booking` objects when the program starts; they are not inner parts of the menu controller. Promotion rule objects similarly outlive any one transaction.
 
-**Example:** UML shows `ActiveHubSystem` ◇—— `Booking` (hollow diamond). Bookings persist in `bookings.txt` even after the menu method returns.
+**Example:** UML `ActiveHubSystem o-- "*" Booking`. After Exit, `bookings.txt` still contains the records.
 
-### C.8 Design justification summary
+### C.8 Why these seven concepts together (justification)
 
-| Requirement | OOP design choice |
-|-------------|-------------------|
-| Three different promotions, one selected | `Promotion` interface + `PromotionEngine` |
-| Three payment methods | `Payment` interface + concrete classes |
-| Multi-item bills | Composition of `TransactionItem` |
-| Avoid double booking using real dates/times | `Booking` with `LocalDate` / `LocalTime` / `DayOfWeek` |
-| Keep menu code manageable | `ActiveHubSystem` orchestrates modules; domain classes hold logic |
+| Brief requirement | Concept that carries it | What would go wrong without it |
+|-------------------|-------------------------|--------------------------------|
+| Hide bill internals | Encapsulation | Totals edited inconsistently; service charge skipped |
+| 4+2+2 catalogue types | Inheritance | Category rules duplicated as strings |
+| Three promotions, one applied | Polymorphism + abstraction | Long if-else; hard to add a fourth rule |
+| Multi-item bills | Composition | Quantity lines mixed with catalogue master data |
+| Bookings persist | Aggregation + association | Records die with the menu screen |
+| Real calendar rules | Encapsulation of `java.time` in `Booking` | `"9:00"` vs `"09:00"` string bugs |
 
 ---
 
 ## PART D – Personal Reflection
 
-*(Each member must write their own short reflection. Replace the placeholders below.)*
+*(Each member must put their real name and student ID on their section, then sign the contribution form. The text below is the group’s agreed draft of what each role learned; personalise the wording before submission.)*
 
-### Member 1 – *(Name / Student ID)*
+### Member 1 – *(Name / Student ID)* — UML and Booking
 
-**Challenges faced and how overcome:**  
-*(Example: Understanding multiplicity and composition vs aggregation was confusing at first. We overcame this by redrawing the UML together and matching each relationship to a Java field.)*
+**Challenges and how they were overcome:** The hardest part was drawing composition versus aggregation without guessing. Early drafts used the same diamond for “system has bookings” and “transaction has line items”. We overcame this by matching each diamond to a Java field: `new TransactionItem(...)` inside `Transaction` is composition; `fileManager.loadBookings(...)` is aggregation because the objects come back from disk.
 
-**What was learned:**  
-*(Example: Learned how `java.time` is better than strings for comparing booking schedules and off-peak rules.)*
+**What was learned:** `LocalDate` and `LocalTime` comparisons (`equals`, `isBefore`) are safer than storing `"2026-11-03"` as a `String`. Clash checking became a single method, `conflictsWith`, instead of three separate string compares.
 
-**Contributions:**  
-*(List your tasks, e.g. UML diagram, booking module, Part C write-up.)*
+**Contributions:** Class identification for Part A; Figure A.1 / A.2 structure; `Booking`, `Facility`, `Customer`; create / view / cancel booking flow; `java.time` validation in the console.
 
-**Most useful OOP concept and why:**  
-*(Example: Polymorphism — one promotion loop handles A/B/C without messy if-else chains.)*
+**Most useful OOP concept and why:** **Encapsulation.** Forcing cancel through `cancel()` stopped accidental edits to status and made the clash rule depend on `isActive()` only.
 
----
+### Member 2 – *(Name / Student ID)* — Catalogue and Transaction
 
-### Member 2 – *(Name / Student ID)*
+**Challenges and how they were overcome:** Updating a transaction after the first bill was awkward: if we kept the old promotion, the discount no longer matched the new lines. We overcame this by calling `clearPromotion()` after `addItem`, then asking staff to run menu 4 again.
 
-**Challenges faced and how overcome:**  
-*(fill in)*
+**What was learned:** Composition is not just a UML symbol. Creating `TransactionItem` only inside `Transaction.addItem` made the bill’s subtotal a loop over owned parts, which matches the brief’s “quantity for each selected item”.
 
-**What was learned:**  
-*(fill in)*
+**Contributions:** `RentalItem` hierarchy and eight catalogue items; `Transaction` / `TransactionItem`; 10% service charge; create / update / view transactions; linking a booking ID or walk-in `NONE`.
 
-**Contributions:**  
-*(fill in)*
+**Most useful OOP concept and why:** **Composition.** It kept catalogue master data (`E01` price) separate from “two racquets on this bill”, which is what the manager actually charges.
 
-**Most useful OOP concept and why:**  
-*(fill in)*
+### Member 3 – *(Name / Student ID)* — Promotions, payments, Part C
 
----
+**Challenges and how they were overcome:** Promotion B can look more generous than the facility charge (for example 20 pax × RM5 = RM100 on a RM40 court). The brief says the reward cannot reduce the facility charge below RM0. We overcame this with `Math.min(saving, getFacilityCharge())` in addition to the RM60 cap. Another issue was the 16:00 boundary; we tested 15:59 versus 16:00 with `LocalTime.isBefore`.
 
-### Member 3 – *(Name / Student ID)*
+**What was learned:** Polymorphism is practical, not theoretical: one `List<Promotion>` replaced a fragile if-else. Tie-break by `getCode()` implemented “A before B before C” without extra flags.
 
-**Challenges faced and how overcome:**  
-*(fill in)*
+**Contributions:** Abstract `Promotion` and three subclasses; `PromotionEngine` best-saving policy; abstract `Payment` and Cash/Card/E-Wallet; Part C write-up with class-level justification.
 
-**What was learned:**  
-*(fill in)*
+**Most useful OOP concept and why:** **Polymorphism.** The engine can list every eligible saving on the bill and still apply only one winner, which is exactly the mandatory selection rule.
 
-**Contributions:**  
-*(fill in)*
+### Member 4 – *(Name / Student ID)* — Persistence, report, testing, UI
 
-**Most useful OOP concept and why:**  
-*(fill in)*
+**Challenges and how they were overcome:** After restart, transaction IDs reset to T001 and collided in memory. We overcame this by parsing the numeric part of existing IDs (`B005` → 5) and continuing from the maximum. Table alignment also broke in IntelliJ because bold text is not strictly monospace; we padded using visible (ANSI-stripped) width instead of `String.format` on coloured strings.
 
----
+**What was learned:** Aggregation matches persistence: the controller holds lists, but `FileManager` is the long-term owner of the text files. Testing a console app needs a scripted path (booking → items → promotion → pay → report), not only compiling.
 
-### Member 4 – *(Name / Student ID)* *(delete if group has only 3 members)*
+**Contributions:** `FileManager` load/save; `DailyReport`; `ConsoleUI` boxed menus and tables; test plan T1–T14; screenshots and report formatting.
 
-**Challenges faced and how overcome:**  
-*(fill in)*
-
-**What was learned:**  
-*(fill in)*
-
-**Contributions:**  
-*(fill in)*
-
-**Most useful OOP concept and why:**  
-*(fill in)*
+**Most useful OOP concept and why:** **Aggregation.** It explained why bookings can be cleared from a file without deleting the `Facility` catalogue, which is how a real centre would reset a day’s diary.
 
 ---
 
 ## SDS Academic Integrity Statement
+
+Sunway Diploma Studies is committed to honesty, trust, fairness, respect and responsibility.
 
 We hereby declare that:
 
@@ -350,7 +445,7 @@ We hereby declare that:
 
 ## Appendix
 
-### A. Source file list
+### A. Source files (map 1:1 to UML)
 
 ```
 src/Main.java
@@ -359,6 +454,9 @@ src/activehub/Booking.java
 src/activehub/Customer.java
 src/activehub/Facility.java
 src/activehub/RentalItem.java
+src/activehub/EquipmentItem.java
+src/activehub/FacilityPackage.java
+src/activehub/AccessoryItem.java
 src/activehub/Transaction.java
 src/activehub/TransactionItem.java
 src/activehub/Promotion.java
@@ -372,6 +470,7 @@ src/activehub/CardPayment.java
 src/activehub/EWalletPayment.java
 src/activehub/FileManager.java
 src/activehub/DailyReport.java
+src/activehub/ConsoleUI.java
 ```
 
 ### B. Data files
@@ -383,12 +482,24 @@ data/bookings.txt
 data/transactions.txt
 ```
 
-### C. Report formatting reminder (for final submission)
+Format example (booking): `B001|Name|Contact|F01|2026-11-03|10:00|10|ACTIVE`
+
+### C. Submission checklist (Excellent band)
+
+| Rubric area | Evidence in this submission |
+|-------------|-----------------------------|
+| UML 19–25 | Figures A.1 and A.2; visibility; multiplicity; inheritance; composition; aggregation; association; polymorphism classes |
+| Coding 23–30 | All six modules; `java.time`; 8-item catalogue; best-of-three promotions; three payments; daily report; text files; boxed UI |
+| OOP discussion 19–25 | Part C names classes, quotes Java/UML, justifies each decision |
+| Documentation 8–10 | All parts A–D; test table; screenshot list; comments on key methods |
+| Reflection 8–10 | Four role reflections; contribution form (must be signed) |
+
+### D. Word/PDF formatting (required by the brief)
 
 - Font: Times New Roman, size 12  
 - Line spacing: 1.5  
-- Softcopy only: Report (PDF/Word) + `.java` files + text data files  
-- Insert UML image and console screenshots before converting to PDF  
+- Insert UML PNGs and console screenshots  
+- One group softcopy: Report + `.java` files + `data/` text files  
 
 ---
 

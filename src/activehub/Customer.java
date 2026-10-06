@@ -33,6 +33,30 @@ public class Customer {
         System.out.println("Contact Number : " + contactNumber);
     }
 
+    /**
+     * Removes spaces, dashes and brackets. Converts +60 / 60 to a local 0-prefix.
+     */
+    public static String normaliseContact(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        String digits = raw.trim().replaceAll("[\\s\\-()]", "");
+        if (digits.startsWith("+60")) {
+            digits = "0" + digits.substring(3);
+        } else if (digits.startsWith("60") && digits.length() >= 11) {
+            digits = "0" + digits.substring(2);
+        }
+        return digits;
+    }
+
+    /**
+     * Malaysian contact: 10 or 11 digits starting with 0
+     * (mobile 01x… or landline 03…).
+     */
+    public static boolean isValidContact(String contact) {
+        return normaliseContact(contact).matches("0\\d{9,10}");
+    }
+
     @Override
     public String toString() {
         return name + " (" + contactNumber + ")";

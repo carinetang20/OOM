@@ -1,14 +1,27 @@
 package activehub;
 
 /**
- * Common contract for rule-based promotions (polymorphism).
+ * Abstract promotion rule. Concrete subclasses A, B and C override
+ * eligibility and saving calculations (inheritance + polymorphism).
  */
-public interface Promotion {
-    String getCode();
+public abstract class Promotion {
+    private final String code;
+    private final String name;
 
-    String getName();
+    protected Promotion(String code, String name) {
+        this.code = code;
+        this.name = name;
+    }
 
-    boolean isEligible(Transaction transaction);
+    public String getCode() {
+        return code;
+    }
 
-    double calculateSaving(Transaction transaction);
+    public String getName() {
+        return name;
+    }
+
+    public abstract boolean isEligible(Transaction transaction);
+
+    public abstract double calculateSaving(Transaction transaction);
 }

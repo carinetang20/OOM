@@ -70,6 +70,10 @@ public class Transaction {
         return eligiblePromotionSummary;
     }
 
+    /**
+     * Adds a catalogue line. If the same item code already exists,
+     * quantity is increased (composition: the line is owned by this bill).
+     */
     public void addItem(RentalItem item, int quantity) {
         for (TransactionItem existing : items) {
             if (existing.getItem().getItemCode().equalsIgnoreCase(item.getItemCode())) {
@@ -97,6 +101,14 @@ public class Transaction {
         return false;
     }
 
+    /** Promotion C: a court booking on file, or a facility/court package on the bill. */
+    public boolean hasFacilityOrCourtBooking() {
+        if (hasFacility()) {
+            return true;
+        }
+        return booking != null && booking.isActive();
+    }
+
     public int getTotalEquipmentQuantity() {
         int total = 0;
         for (TransactionItem item : items) {
@@ -114,22 +126,30 @@ public class Transaction {
                 total += item.getSubtotal();
             }
         }
-        return total;
+        return roundMoney(total);
     }
 
+    /** 10% of (subtotal minus discount). Service charge is never discounted by A/B/C. */
     public double calculateServiceCharge() {
-        double amountAfterDiscount = Math.max(0.0, calculateSubtotal() - discountAmount);
-        return amountAfterDiscount * 0.10;
+        return roundMoney(amountAfterDiscount() * 0.10);
     }
 
     public double calculateFinalAmount() {
-        finalAmount = Math.max(0.0, calculateSubtotal() - discountAmount) + calculateServiceCharge();
+        finalAmount = roundMoney(amountAfterDiscount() + calculateServiceCharge());
         return finalAmount;
+    }
+
+    private double amountAfterDiscount() {
+        return Math.max(0.0, calculateSubtotal() - discountAmount);
+    }
+
+    static double roundMoney(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 
     public void setSelectedPromotion(Promotion promotion, double saving) {
         this.selectedPromotion = promotion;
-        this.discountAmount = saving;
+        this.discountAmount = roundMoney(Math.min(Math.max(0.0, saving), calculateSubtotal()));
         calculateFinalAmount();
     }
 
@@ -170,20 +190,23 @@ public class Transaction {
         }
 
         ConsoleUI.dividerSoft();
-        ConsoleUI.info("Line items");
-        ConsoleUI.tableHeader("%-8s %-28s %4s %10s", "Code", "Item", "Qty", "Amount");
+        List<String[]> itemRows = new ArrayList<>();
         for (TransactionItem item : items) {
-            item.display();
+            itemRows.add(item.toTableRow());
         }
+        ConsoleUI.boxedTable("Line items",
+                new String[]{"Code", "Item", "Qty", "Amount"},
+                new boolean[]{false, false, true, true},
+                itemRows);
 
         ConsoleUI.kv("Subtotal", ConsoleUI.money(calculateSubtotal()));
         ConsoleUI.kv("Facility charge", ConsoleUI.money(getFacilityCharge()));
 
         ConsoleUI.dividerSoft();
+        ConsoleUI.info("Eligible promotions (only one will be applied)");
         if (eligiblePromotionSummary.isEmpty()) {
-            ConsoleUI.kv("Eligible promos", ConsoleUI.dim("None"));
+            ConsoleUI.kv("Eligible", ConsoleUI.dim("None"));
         } else {
-            ConsoleUI.info("Eligible promotions");
             for (String line : eligiblePromotionSummary) {
                 System.out.println("    " + ConsoleUI.cyan("• ") + line);
             }
@@ -194,7 +217,7 @@ public class Transaction {
                     selectedPromotion.getCode() + " — " + selectedPromotion.getName()));
             ConsoleUI.kv("Discount", ConsoleUI.yellow("− " + ConsoleUI.money(discountAmount)));
         } else {
-            ConsoleUI.kv("Selected promo", ConsoleUI.dim("None"));
+            ConsoleUI.kv("Selected promo", ConsoleUI.dim("None (promotions not combined)"));
             ConsoleUI.kv("Discount", ConsoleUI.money(0.0));
         }
 
@@ -210,6 +233,9 @@ public class Transaction {
         ConsoleUI.boxRow("  Status         : "
                 + (completed ? ConsoleUI.green("PAID") : ConsoleUI.yellow("PENDING")));
         ConsoleUI.boxBottom();
+        ConsoleUI.blank();
+        ConsoleUI.dotBarrier();
+        ConsoleUI.blank();
     }
 
     public String toFileLine() {

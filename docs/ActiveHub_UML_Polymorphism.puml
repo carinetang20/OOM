@@ -1,0 +1,75 @@
+@startuml ActiveHub_UML_Polymorphism
+skinparam classAttributeIconSize 0
+hide circle
+title Figure A.2 — Inheritance & polymorphism (promotions, payments, catalogue)
+
+abstract class RentalItem {
+  - itemCode: String
+  - rentalPrice: double
+  + {abstract} getCategory(): String
+  + isEquipment(): boolean
+  + isFacility(): boolean
+}
+
+class EquipmentItem {
+  + isEquipment(): boolean
+}
+class FacilityPackage {
+  + isFacility(): boolean
+}
+class AccessoryItem {
+  + isAccessory(): boolean
+}
+
+RentalItem <|-- EquipmentItem
+RentalItem <|-- FacilityPackage
+RentalItem <|-- AccessoryItem
+
+abstract class Promotion {
+  - code: String
+  - name: String
+  + {abstract} isEligible(t: Transaction): boolean
+  + {abstract} calculateSaving(t: Transaction): double
+}
+
+class OffPeakSaver
+class TeamBookingReward
+class EquipmentBundleDiscount
+
+Promotion <|-- OffPeakSaver
+Promotion <|-- TeamBookingReward
+Promotion <|-- EquipmentBundleDiscount
+
+class PromotionEngine {
+  - promotions: List~Promotion~
+  + applyBestPromotion(t: Transaction): void
+}
+PromotionEngine o-- "3" Promotion
+
+abstract class Payment {
+  # amountPaid: double
+  + {abstract} processPayment(amount: double): void
+  + {abstract} getPaymentMethod(): String
+}
+
+class CashPayment
+class CardPayment
+class EWalletPayment
+
+Payment <|-- CashPayment
+Payment <|-- CardPayment
+Payment <|-- EWalletPayment
+
+class Transaction {
+  + calculateFinalAmount(): double
+  + setPayment(p: Payment): void
+}
+Transaction --> "0..1" Promotion : selected
+Transaction --> "0..1" Payment : paid with
+
+note right of PromotionEngine
+  Runtime dispatch: no instanceof checks.
+  Best single saving wins; alphabetical tie-break.
+end note
+
+@enduml

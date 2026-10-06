@@ -2,24 +2,21 @@ package activehub;
 
 /**
  * Promotion B - Team Booking Reward
- * For 8+ participants: RM5 per participant, capped at RM60,
- * and cannot reduce facility charge below RM0.
+ * Booking with 8 or more participants: RM5 per participant.
+ * Cap RM60 per transaction. Cannot reduce facility charge below RM0.
  */
-public class TeamBookingReward implements Promotion {
-    @Override
-    public String getCode() {
-        return "B";
-    }
-
-    @Override
-    public String getName() {
-        return "Team Booking Reward";
+public class TeamBookingReward extends Promotion {
+    public TeamBookingReward() {
+        super("B", "Team Booking Reward");
     }
 
     @Override
     public boolean isEligible(Transaction transaction) {
         Booking booking = transaction.getBooking();
-        if (booking == null || !transaction.hasFacility()) {
+        if (booking == null || !booking.isActive()) {
+            return false;
+        }
+        if (transaction.getFacilityCharge() <= 0) {
             return false;
         }
         return booking.getParticipants() >= 8;
@@ -34,6 +31,6 @@ public class TeamBookingReward implements Promotion {
         double saving = participants * 5.00;
         saving = Math.min(saving, 60.00);
         saving = Math.min(saving, transaction.getFacilityCharge());
-        return saving;
+        return Transaction.roundMoney(saving);
     }
 }

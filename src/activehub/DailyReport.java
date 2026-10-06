@@ -9,8 +9,6 @@ import java.util.Map;
  */
 public class DailyReport {
     public void generate(List<Booking> bookings, List<Transaction> transactions) {
-        ConsoleUI.section("DAILY SUMMARY REPORT");
-
         int activeBookings = 0;
         for (Booking b : bookings) {
             if (b.isActive()) {
@@ -40,7 +38,7 @@ public class DailyReport {
             }
         }
 
-        String topItem = "N/A";
+        String topItem = "None yet";
         int topQty = 0;
         for (Map.Entry<String, Integer> e : itemFrequency.entrySet()) {
             if (e.getValue() > topQty) {
@@ -51,26 +49,32 @@ public class DailyReport {
 
         ConsoleUI.blank();
         ConsoleUI.boxTop();
-        ConsoleUI.boxCenter(ConsoleUI.bold("Today at ActiveHub"));
+        ConsoleUI.boxCenter(ConsoleUI.bold("DAILY SUMMARY REPORT"));
+        ConsoleUI.boxCenter(ConsoleUI.dim("Today at ActiveHub"));
+        ConsoleUI.boxDivider();
         ConsoleUI.boxBlank();
-        ConsoleUI.boxRow("  Active facility bookings     "
-                + ConsoleUI.bold(String.valueOf(activeBookings)));
-        ConsoleUI.boxRow("  Completed transactions       "
-                + ConsoleUI.bold(String.valueOf(completedCount)));
-        ConsoleUI.boxRow("  Total daily revenue          "
-                + ConsoleUI.bold(ConsoleUI.green(ConsoleUI.money(totalRevenue))));
+        ConsoleUI.boxKeyValue("Active facility bookings", String.valueOf(activeBookings));
+        ConsoleUI.boxKeyValue("Completed transactions", String.valueOf(completedCount));
+        ConsoleUI.boxKeyValue("Total daily revenue",
+                ConsoleUI.green(ConsoleUI.money(totalRevenue)));
         ConsoleUI.boxBlank();
-        ConsoleUI.boxRow("  Most rented item");
-        ConsoleUI.boxRow("    " + topItem
-                + (topQty > 0 ? ConsoleUI.dim("  × " + topQty) : ""));
+        ConsoleUI.boxDivider();
         ConsoleUI.boxBlank();
-        ConsoleUI.boxRow("  Payment methods");
+        ConsoleUI.boxSectionLabel("Most rented item");
+        if (topQty > 0) {
+            ConsoleUI.boxKeyValue("  " + topItem, "× " + topQty);
+        } else {
+            ConsoleUI.boxRow("    " + ConsoleUI.dim("(no completed rentals yet)"));
+        }
+        ConsoleUI.boxBlank();
+        ConsoleUI.boxDivider();
+        ConsoleUI.boxBlank();
+        ConsoleUI.boxSectionLabel("Payment methods");
         if (paymentMethods.isEmpty()) {
             ConsoleUI.boxRow("    " + ConsoleUI.dim("(no completed payments yet)"));
         } else {
             for (Map.Entry<String, Integer> e : paymentMethods.entrySet()) {
-                ConsoleUI.boxRow("    • " + e.getKey() + "  "
-                        + ConsoleUI.bold(String.valueOf(e.getValue())));
+                ConsoleUI.boxKeyValue("  " + e.getKey(), String.valueOf(e.getValue()));
             }
         }
         ConsoleUI.boxBlank();
